@@ -30,8 +30,8 @@ INFO_BG_COLOR = (245, 245, 245) # Color de fondo para la barra de datos
 class SmartHorsesBoard:
     def __init__(self):
         # Cargar las imágenes de los caballos
-        self.white_knight = pygame.image.load('graphics/HW.png')
-        self.black_knight = pygame.image.load('graphics/HB.png')
+        self.white_knight = pygame.image.load('./image/HW.png')
+        self.black_knight = pygame.image.load('./image/HB.png')
         
         # Escalar las imágenes al tamaño de las casillas
         self.white_knight = pygame.transform.scale(self.white_knight, (SQUARE_SIZE, SQUARE_SIZE))
