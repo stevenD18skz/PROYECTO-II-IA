@@ -30,8 +30,8 @@ INFO_BG_COLOR = (245, 245, 245) # Color de fondo para la barra de datos
 class SmartHorsesBoard:
     def __init__(self):
         # Cargar las imágenes de los caballos
-        self.white_knight = pygame.image.load('HW.png')
-        self.black_knight = pygame.image.load('HB.png')
+        self.white_knight = pygame.image.load('graphics/HW.png')
+        self.black_knight = pygame.image.load('graphics/HB.png')
         
         # Escalar las imágenes al tamaño de las casillas
         self.white_knight = pygame.transform.scale(self.white_knight, (SQUARE_SIZE, SQUARE_SIZE))
@@ -64,15 +64,11 @@ class SmartHorsesBoard:
                 rect = pygame.Rect(y * SQUARE_SIZE, x * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
                 pygame.draw.rect(win, color, rect)
 
-                # Dibujar el contenido de las casillas (caballos, x2, puntos)
                 value = col
-
-
                 if value == 'HW':
                     win.blit(self.white_knight, rect.topleft)
                     if self.back.maquina.bono:
                         pygame.draw.ellipse(win, PASTEL_GOLD, rect.inflate(10, 10), 6)
-
 
                 elif value == 'HB':
                     win.blit(self.black_knight, rect.topleft)
@@ -130,9 +126,14 @@ class SmartHorsesBoard:
         x, y = pos
         row = y // SQUARE_SIZE
         col = x // SQUARE_SIZE
-
-        self.back.moveHorse(direccion=0, tupla=(row, col))
+        self.back.moveHorse(tupla=(row, col))
         self.back.check_winner()  # Verificar si hay un ganador
+
+
+        move = self.back.find_best_move()
+        #self.back.moveHorse(tupla=move)
+        #self.back.check_winner()  # Verificar si hay un ganador
+
 
         return (row, col)
 
@@ -190,7 +191,7 @@ def main():
                 pos = pygame.mouse.get_pos()
                 if pos[0] < BOARD_WIDTH:
                     row, col = board.get_square_under_mouse(pos)
-                    print(f"Se hizo clic en la casilla: ({row}, {col})")
+                    #print(f"Se hizo clic en la casilla: ({row}, {col})")
 
         # Dibujar el tablero y el panel de información
         board.draw(win)
