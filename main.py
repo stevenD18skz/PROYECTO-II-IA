@@ -13,6 +13,7 @@ class jugador:
         self.representacion = representacion
     
     def setScore(self, new_score):
+        print(f"el nombre {self.nombre} se le agrega {new_score}")
         if self.bono:
             self.score += new_score * 2
             self.bono = False
@@ -27,7 +28,7 @@ class jugador:
         new_player.bono = self.bono
         return new_player
 
-    # Sobrescribir el método __str__ para definir qué se imprime
+
     def __str__(self):
         return f"Jugador: {self.nombre}, Puntuación: {self.score}, Bono: {"X2" if self.bono else "X1"}"
 
@@ -37,16 +38,6 @@ class jugador:
 class MiClase:
     def __init__(self):
         self.tablero = self.generate_grid()
-        self.tablero = [
-            [   0,    0, 0, 0, 0,  0,    0, "x2"],
-            [   0, "x2", 0, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            [   0,    3, 0, 0, 0,  0, "x2",    0],
-            [   0,    0, 0, 'HB', 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,'HW',   0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            ["x2",    0, 0, 0, 0,  0,    2,    0],
-        ]
 
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
@@ -145,8 +136,13 @@ class MiClase:
             resultado = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
             posibles_movimientos.append(resultado)
         
-        resultado = [t for t in posibles_movimientos if all(0 <= x <= 7 for x in t)] 
-        final = [i for i in resultado if self.tablero[i[0]][i[1]] not in ["HW", "HB"]]
+        resultado = [t for t in posibles_movimientos if all(0 <= x <= 7 for x in t)]
+
+
+        final = []
+        for i in resultado:
+            if self.tablero[i[0]][i[1]] not in ["HB", "HW"]:
+                final.append(i)
 
         return final
 
@@ -158,7 +154,6 @@ class MiClase:
             self.alert = "movimiento invalido"
             return
 
-        self.alert = ""
         fila_actual, columna_actual = self.find_position(self.turno.representacion)
         nueva_fila, nueva_columna = tupla
         valor = self.tablero[nueva_fila][nueva_columna]
@@ -175,7 +170,7 @@ class MiClase:
             
         elif valor == "x2":
             self.turno.bono = True
-        
+
 
         #CAMBIAR DE TURNO
         if self.turno.representacion == self.player.representacion:
@@ -183,6 +178,8 @@ class MiClase:
         
         else:
             self.turno = self.player
+   
+        self.alert = ""
 
 
 
@@ -193,30 +190,26 @@ class MiClase:
     def find_best_move(self):
         best_score = -math.inf
         best_move = None
-        
-        # Guardar el estado inicial del juego
-        previa_tablero = copy.deepcopy(self.tablero)  # Copia profunda del tablero
-        previa_player = self.player.clone()  # Clon de la instancia de jugador
-        previa_maquina = self.maquina.clone()  # Clon de la instancia de jugador
-        previa_turno = self.turno.clone()  # Esto puede seguir así, asumiendo que es inmutable o se establece correctamente
-
         avalible = self.calculate_available_moves()
+
 
         # MOVER EL CABALLO
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
-            self.moveHorse(pos)
+
+
 
             # Calcular el valor de esta jugada
-            score = 5  # self.minimax(self.tablero, 0, False, move=pos)
+            score = self.tablero[pos[0]][pos[1]] #self.minimax(self.tablero, 0, False, move=pos)
+            print(f"Movimiento {pos} Score: {score}")
+
+
 
             # Retornar el tablero y jugadores al estado original usando las copias
-            self.tablero = previa_tablero  # Esto debe ser una copia profunda
-            self.player = previa_player  # Restablecer al jugador original
-            self.maquina = previa_maquina  # Restablecer a la máquina original
-            self.turno = previa_turno  # Esto puede seguir así
 
-            print(f"Movimiento {pos} tiene un puntaje de {score}")
+
+
+            #actualizar el mejor nodo
             if score > best_score:
                 best_score = score
                 best_move = pos
@@ -226,55 +219,54 @@ class MiClase:
 
 
 
-
-    # Algoritmo Minimax
-    def minimax(self, board, depth, is_maximizing, move=None):
-        winner = self.check_winner(board)
-        
-        # Si la IA gana, devuelve +1
-        if winner == 2:
-            return 1
-        
-        # Si el humano gana, devuelve -1
-        if winner == 1:
-            return -1
-        
-        # Si es empate, devuelve 0
-        if self.is_full(board):
-            return 0
-
-        if move is not None:
-            print(f"Evaluando movimiento: {self.tablero}")
+        # Algoritmo Minimax
+        def minimax(self, board, depth, is_maximizing, move=None):
+            winner = self.check_winner(board)
             
+            # Si la IA gana, devuelve +1
+            if winner == 2:
+                return 1
+            
+            # Si el humano gana, devuelve -1
+            if winner == 1:
+                return -1
+            
+            # Si es empate, devuelve 0
+            if self.is_full(board):
+                return 0
 
-        # Jugador IA (maximizar)
-        if is_maximizing:
-            best_score = -math.inf
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == 0:
-                        board[i][j] = 2
-                        score = self.minimax(board, depth + 1, False, move=(i, j))
-                        board[i][j] = 0
-                        best_score = max(score, best_score)
-                        if move is not None:
-                            print(f"Puntaje del movimiento {move}: {score}")
-            return best_score
+            if move is not None:
+                print(f"Evaluando movimiento: {self.tablero}")
+                
+
+            # Jugador IA (maximizar)
+            if is_maximizing:
+                best_score = -math.inf
+                for i in range(3):
+                    for j in range(3):
+                        if board[i][j] == 0:
+                            board[i][j] = 2
+                            score = self.minimax(board, depth + 1, False, move=(i, j))
+                            board[i][j] = 0
+                            best_score = max(score, best_score)
+                            if move is not None:
+                                print(f"Puntaje del movimiento {move}: {score}")
+                return best_score
 
 
-        # Jugador humano (minimizar)
-        else:
-            best_score = math.inf
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == 0:
-                        board[i][j] = 1
-                        score = self.minimax(board, depth + 1, True, move=(i, j))
-                        board[i][j] = 0
-                        best_score = min(score, best_score)
-                        if move is not None:
-                            print(f"Puntaje del movimiento {move}: {score}")
-            return best_score
+            # Jugador humano (minimizar)
+            else:
+                best_score = math.inf
+                for i in range(3):
+                    for j in range(3):
+                        if board[i][j] == 0:
+                            board[i][j] = 1
+                            score = self.minimax(board, depth + 1, True, move=(i, j))
+                            board[i][j] = 0
+                            best_score = min(score, best_score)
+                            if move is not None:
+                                print(f"Puntaje del movimiento {move}: {score}")
+                return best_score
 
 
 

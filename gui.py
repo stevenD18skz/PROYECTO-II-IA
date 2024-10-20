@@ -131,8 +131,8 @@ class SmartHorsesBoard:
 
 
         move = self.back.find_best_move()
-        #self.back.moveHorse(tupla=move)
-        #self.back.check_winner()  # Verificar si hay un ganador
+        self.back.moveHorse(tupla=move)
+        self.back.check_winner()  # Verificar si hay un ganador
 
 
         return (row, col)
