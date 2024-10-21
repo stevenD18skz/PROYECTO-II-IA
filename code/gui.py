@@ -1,5 +1,7 @@
 import pygame
 from main import *
+import os
+
 
 # Inicializar Pygame
 pygame.init()
@@ -204,4 +206,5 @@ def main():
 
 
 if __name__ == "__main__":
+    os.system("cls")
     main()

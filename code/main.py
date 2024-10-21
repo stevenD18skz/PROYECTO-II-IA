@@ -38,7 +38,7 @@ class jugador:
 class MiClase:
     def __init__(self, grid=None, player=None, maquina=None, turno="o"):
         #ATRIBUTOS ENTORNO
-        self.tablero = self.generate_grid()
+        self.tablero = grid or self.generate_grid()
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -52,9 +52,9 @@ class MiClase:
 
 
         #MAQUINA JUGADOR
-        self.player = jugador("STEVEN", "HB")
-        self.maquina = jugador("MACHINE", "HW")
-        self.turno = self.maquina
+        self.player = player or jugador("STEVEN", "HB")
+        self.maquina = maquina or jugador("MACHINE", "HW")
+        self.turno = self.maquina if turno == "o" else self.player
 
 
         #ATRIBUTOS JUEGO
@@ -151,10 +151,18 @@ class MiClase:
 
 
  
-    def moveHorse(self, tupla = ""):
+    def moveHorse(self, tupla = "", clon=False):
+        print(clon)
+        if clon:
+            print("1111111111111111111")
+            
         if tupla not in self.calculate_available_moves():
             self.alert = "movimiento invalido"
             return
+        
+        print(clon)
+        if clon:
+            print("dddddddddddddddd")
 
         fila_actual, columna_actual = self.find_position(self.turno.representacion)
         nueva_fila, nueva_columna = tupla
@@ -200,10 +208,14 @@ class MiClase:
         best_move = None
         avalible = self.calculate_available_moves()
 
-
+        self.pintarTrablero()
         # MOVER EL CABALLO  
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
+            print(f"movimiento {pos}")
+            new = MiClase(copy.deepcopy(self.tablero), self.player.clone(), self.maquina.clone(), "o")
+            new.moveHorse(pos, clon=True)
+            new.pintarTrablero()
 
 
 
@@ -224,8 +236,49 @@ class MiClase:
         if best_score == 0:
             best_move = random.choice(avalible)
         
-
+        
+        
         return best_move
+    
+
+    def pintarTrablero(self):
+        posibles_movimientos = []
+        for i in range(8):
+            pocision_caballo = self.find_position(self.turno.representacion)
+            movimiento = (self.directions[i][1], self.directions[i][2])
+            resultado = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
+            posibles_movimientos.append(resultado)
+
+
+        print(self.player)
+        print(self.maquina)
+        for x, row in enumerate(self.tablero):
+            for y, value in enumerate(row):
+                if value == 'HW':
+                    # Imprimir "H" en verde
+                    print(f"\033[91m{value:<2}\033[0m", end="  ")
+
+                elif value == 'HB':
+                    # Imprimir "H" en verde
+                    print(f"\033[92m{value:<2}\033[0m", end="  ")
+
+                elif (x, y) in posibles_movimientos:
+                    print(f"\033[92m{value:<2}\033[0m", end="  ")
+
+                elif value == 'x2':
+                    # Imprimir "H" en verde
+                    print(f"\033[93m{value:<2}\033[0m", end="  ")
+                
+                elif value != 0:
+                    print(f"\033[96m{value:<2}\033[0m", end="  ")
+
+                else:
+                    print(f"\033[90m{value:<2}\033[0m", end="  ")
+
+            print("")
+        
+        print(f"error: {self.alert}")
+
 
 
 
