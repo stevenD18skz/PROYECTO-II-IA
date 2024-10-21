@@ -45,11 +45,11 @@ class MiClase:
         #ATRIBUTOS ENTORNO
         self.tablero = grid or [
             [   0,    0, 0, 0, 0,  0,    0, "X2"],
-            [   0, "X2", 0, 0, 0,  0,    0,    0],
+            [ "IA",   0, 0, 0, 0,  0,    0,    0],
             [   0,    0, 0, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,  0, "X2",    0],
-            [   3,    0, 0, 'IA', 0,  0,    0,    0],
-            [   0,    8, 0, 0, 0,'PY',   0,    0],
+            [   0,    8, 0, 0, 0,  0, "X2",    0],
+            [   3,    0, 0, 'X2', 0,  0,    0,    0],
+            [   0,    0, 0, 0, 0,'PY',   0,    0],
             [   0,    0, 0, 0, 0,  0,    0,    0],
             ["X2",    0, 0, 0, 0,  0,    2,    0],
         ]
@@ -210,32 +210,31 @@ class MiClase:
 
 
 
-    # Encuentra el mejor movimiento para la IA
+
     def find_best_move(self):
         best_score = -math.inf
         best_move = None
         avalible = self.calculate_available_moves()
-        print(f"ramas arbol {avalible}")
-
-
+        print(f"ramas arbol {avalible} ESTADO INICIAL")
         self.pintarTrablero()
+        
+        
+
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
-            print(f"\n\nmovimiento {pos}")
-            new = MiClase(copy.deepcopy(self.tablero), self.player.clone(), self.maquina.clone(), "o")
-            new.moveHorse(pos, clon=True)
-            new.pintarTrablero()
-            print(f"estado ia al final {new.maquina.score}")
+            print(f"\n\n        movimiento {pos} Profundidad 1 MAX⬆️")
+            new_state = self.clone()
+            new_state.moveHorse(pos, clon=True)
+            new_state.pintarTrablero(depth=1)
+            print(f"        estado ia al final {new_state.maquina.score}")
 
 
             # Calcular el valor de esta jugada
-            score = self.calculate_heuristica(self.tablero[pos[0]][pos[1]]) #self.minimax(self.tablero, 0, False, move=pos)
-
+            score = self.minimax(new_state, 2, is_maximizing=False, move=pos) #self.calculate_heuristica(self.tablero[pos[0]][pos[1]]) #
 
 
             # Retornar el tablero y jugadores al estado original usando las copias
-            del new
-
+            del new_state
 
 
             #actualizar el mejor nodo
@@ -243,50 +242,68 @@ class MiClase:
                 best_score = score
                 best_move = pos
 
+
         if best_score == 0:
             best_move = random.choice(avalible)
-        
-        
         
         return best_move
     
 
-    
-        # Algoritmo Minimax
-    def minimax(self, board, depth, is_maximizing, move=None):
+
+
+    def minimax(self, game_state, depth, is_maximizing, move=None):
+        if depth == 4:
+            return 10
+        
+        
+
         # Jugador IA (maximizar)
         if is_maximizing:
             best_score = -math.inf
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == 0:
-                        board[i][j] = 2
-                        score = self.minimax(board, depth + 1, False, move=(i, j))
-                        board[i][j] = 0
-                        best_score = max(score, best_score)
-                        if move is not None:
-                            print(f"Puntaje del movimiento {move}: {score}")
+            avalible = game_state.calculate_available_moves()
+
+            for i, pos in enumerate(avalible):
+                # Simular la jugada de la IA
+                print(f"\n\n{'        '*depth}movimiento {pos} profundidad {depth} MAX⬆️")
+                new_state = game_state.clone()
+                new_state.moveHorse(pos, clon=True)
+                new_state.pintarTrablero(depth=depth)
+                print(f"{'        '*depth}estado ia al final {new_state.maquina.score}")
+
+                score = game_state.minimax(new_state, depth + 1, is_maximizing=False, move=pos)
+                
+                del new_state
+
+                best_score = max(score, best_score)
+
             return best_score
 
 
         # Jugador humano (minimizar)
         else:
             best_score = math.inf
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == 0:
-                        board[i][j] = 1
-                        score = self.minimax(board, depth + 1, True, move=(i, j))
-                        board[i][j] = 0
-                        best_score = min(score, best_score)
-                        if move is not None:
-                            print(f"Puntaje del movimiento {move}: {score}")
+            avalible = game_state.calculate_available_moves()
+
+            for i, pos in enumerate(avalible):
+                print(f"\n\n{'        '*depth}movimiento {pos} profundidad {depth} MIN⭕")
+                new_state = game_state.clone()
+                new_state.moveHorse(pos, clon=True)
+                new_state.pintarTrablero(depth=depth)
+                print(f"{'        '*depth}estado ia al final {new_state.maquina.score}")
+
+                score = game_state.minimax(new_state, depth + 1, is_maximizing=True, move=pos)
+                
+                del new_state
+
+                best_score = min(score, best_score)
+
+
             return best_score
     
 
 
 
-    def pintarTrablero(self):
+    def pintarTrablero(self, depth = 0):
         posibles_movimientos = []
         for i in range(8):
             pocision_caballo = self.find_position(self.turno.representacion)
@@ -295,9 +312,10 @@ class MiClase:
             posibles_movimientos.append(resultado)
 
 
-        print(self.player)
-        print(self.maquina)
+        print(f"{'        '*depth}{self.player}")
+        print(f"{'        '*depth}{self.maquina}")
         for x, row in enumerate(self.tablero):
+            print(f"{'        '*depth}", end="")
             for y, value in enumerate(row):
                 if value == self.REPRESENTACION_IA:
                     # Imprimir "H" en verde
@@ -319,14 +337,28 @@ class MiClase:
 
                 else:
                     print(f"\033[90m{value:<2}\033[0m", end="  ")
-
             print("")
+
+            
         
-        print(f"error: {self.alert}")
+        
 
 
 
-
+    def clone(self):
+        # Crear una nueva instancia de MiClase con las copias necesarias
+        new_instance = MiClase(
+            grid=copy.deepcopy(self.tablero),   # Clonar el tablero
+            player=self.player.clone(),         # Clonar el jugador
+            maquina=self.maquina.clone(),       # Clonar la máquina
+            turno="x" if self.turno == self.player else "o"  # Determinar el turno actual
+        )
+        
+        # Clonar otros atributos si es necesario
+        new_instance.alert = self.alert
+        new_instance.winner = self.winner
+        
+        return new_instance
 
 
 
@@ -338,6 +370,8 @@ class MiClase:
 #motor.ejecutar()
 
 """
+#MiClase(copy.deepcopy(game_state.tablero), game_state.player.clone(), game_state.maquina.clone(), "o")
+                new_state.moveHorse(pos, clon=True)
   #self.minimax(self.tablero, 0, False, move=pos)
 
         # Algoritmo Minimax
