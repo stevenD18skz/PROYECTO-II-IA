@@ -19,7 +19,7 @@ SQUARE_SIZE = BOARD_WIDTH // COLS  # Tamaño de cada casilla
 PASTEL_LIGHT = (255, 239, 213)  # Color claro del tablero
 PASTEL_DARK = (189, 183, 107)   # Color oscuro del tablero
 PASTEL_YELLOW = (253, 253, 150) # Casillas con puntos
-PASTEL_GOLD = (250, 218, 94)    # Casillas x2
+PASTEL_GOLD = (220, 218, 80)    # Casillas x2
 PASTEL_GREEN = (100, 218, 50)   # Casillas DISPONIBLES
 PASTEL_COMBINATION_AVALIBLE_NUMBER = (100, 100, 100)   # Casillas CON NUMERO DISPONIBLE
 PASTEL_COMBINATION_AVALIBLE_BONO = (200, 100, 100)   # Casillas CON BONO X2 DISPONIBLE
@@ -67,12 +67,12 @@ class SmartHorsesBoard:
                 pygame.draw.rect(win, color, rect)
 
                 value = col
-                if value == 'HW':
+                if value == self.back.REPRESENTACION_IA:
                     win.blit(self.white_knight, rect.topleft)
                     if self.back.maquina.bono:
                         pygame.draw.ellipse(win, PASTEL_GOLD, rect.inflate(10, 10), 6)
 
-                elif value == 'HB':
+                elif value == self.back.REPRESENTACION_PLAYER:
                     win.blit(self.black_knight, rect.topleft)
                     if self.back.player.bono:
                         pygame.draw.ellipse(win, PASTEL_GOLD, rect.inflate(10, 10), 6)
@@ -80,15 +80,19 @@ class SmartHorsesBoard:
                 elif (x, y) in avalible_moves and isinstance(value, int) and value != 0:
                     pygame.draw.rect(win, PASTEL_COMBINATION_AVALIBLE_NUMBER, rect)
                     self.draw_text(win, str(value), rect.center, TEXT_COLOR_AVALIBLE)
-                elif (x, y) in avalible_moves and value == 'x2':
+
+                elif (x, y) in avalible_moves and value == self.back.REPRESENTACION_BONO:
                     pygame.draw.rect(win, PASTEL_COMBINATION_AVALIBLE_BONO, rect)
-                    self.draw_text(win, 'x2', rect.center, TEXT_COLOR_AVALIBLE)
+                    self.draw_text(win, self.back.REPRESENTACION_BONO, rect.center, TEXT_COLOR_AVALIBLE)
+
                 elif (x, y) in avalible_moves:
                     pygame.draw.rect(win, PASTEL_GREEN, rect)
                     self.draw_text(win, 'F', rect.center)
-                elif value == 'x2':
+
+                elif value == self.back.REPRESENTACION_BONO:
                     pygame.draw.rect(win, PASTEL_GOLD, rect)
-                    self.draw_text(win, 'x2', rect.center)
+                    self.draw_text(win, self.back.REPRESENTACION_BONO, rect.center)
+
                 elif isinstance(value, int) and value != 0:
                     pygame.draw.rect(win, PASTEL_YELLOW, rect)
                     self.draw_text(win, str(value), rect.center)
@@ -106,9 +110,9 @@ class SmartHorsesBoard:
 
         # Mostrar mensaje de victoria
         font = pygame.font.SysFont(None, 64)
-        if self.back.winner == 'HW':
-            text = "¡Gana el Caballo Blanco!"
-        elif self.back.winner == 'HB':
+        if self.back.winner == self.back.REPRESENTACION_IA:
+            text = "¡Gana el Caballo Blanco LA IA!"
+        elif self.back.winner == self.back.REPRESENTACION_PLAYER:
             text = "¡Gana el Caballo Negro!"
         else:
             text = "¡Es un empate!"
@@ -132,7 +136,7 @@ class SmartHorsesBoard:
         self.back.check_winner()  # Verificar si hay un ganador
 
 
-        if self.back.turno.representacion == "HB":
+        if self.back.turno.representacion == self.back.REPRESENTACION_IA:
             move = self.back.find_best_move()
             self.back.moveHorse(tupla=move)
             self.back.check_winner()  # Verificar si hay un ganador
@@ -156,7 +160,7 @@ class InfoPanel:
         pygame.draw.rect(win, INFO_BG_COLOR, (BOARD_WIDTH, 0, INFO_WIDTH, INFO_HEIGHT))
 
         # Texto de información
-        self.draw_text(win, f"Turn: {'White' if turn == 'HW' else 'Black'}", (BOARD_WIDTH + 20, 50))
+        self.draw_text(win, f"Turn: {'White' if turn == 'IA' else 'Black'}", (BOARD_WIDTH + 20, 50))
         self.draw_text(win, f"White Score: {score_white}", (BOARD_WIDTH + 20, 150))
         self.draw_text(win, f"Black Score: {score_black}", (BOARD_WIDTH + 20, 250))
 
