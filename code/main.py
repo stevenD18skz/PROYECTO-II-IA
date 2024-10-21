@@ -36,9 +36,9 @@ class jugador:
 
 
 class MiClase:
-    def __init__(self):
+    def __init__(self, grid=None, player=None, maquina=None, turno="o"):
+        #ATRIBUTOS ENTORNO
         self.tablero = self.generate_grid()
-
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -50,12 +50,15 @@ class MiClase:
             ("L arriba izquierda", -2, -1),  # Dos hacia atrás, una a la izquierda
         ]
 
+
+        #MAQUINA JUGADOR
         self.player = jugador("STEVEN", "HB")
         self.maquina = jugador("MACHINE", "HW")
         self.turno = self.maquina
 
-        self.alert = ""
 
+        #ATRIBUTOS JUEGO
+        self.alert = ""
         self.winner = None
 
 
@@ -138,7 +141,6 @@ class MiClase:
         
         resultado = [t for t in posibles_movimientos if all(0 <= x <= 7 for x in t)]
 
-
         final = []
         for i in resultado:
             if self.tablero[i[0]][i[1]] not in ["HB", "HW"]:
@@ -184,6 +186,12 @@ class MiClase:
 
 
 
+    def calculate_heuristica(self, valor):
+        if valor == "x2":
+            return 5
+        
+        return valor
+
 
 
     # Encuentra el mejor movimiento para la IA
@@ -193,15 +201,14 @@ class MiClase:
         avalible = self.calculate_available_moves()
 
 
-        # MOVER EL CABALLO
+        # MOVER EL CABALLO  
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
 
 
 
             # Calcular el valor de esta jugada
-            score = self.tablero[pos[0]][pos[1]] #self.minimax(self.tablero, 0, False, move=pos)
-            print(f"Movimiento {pos} Score: {score}")
+            score = self.calculate_heuristica(self.tablero[pos[0]][pos[1]])
 
 
 
@@ -214,10 +221,26 @@ class MiClase:
                 best_score = score
                 best_move = pos
 
+        if best_score == 0:
+            best_move = random.choice(avalible)
+        
+
         return best_move
 
 
 
+
+
+
+
+
+
+
+#motor = MiClase()
+#motor.ejecutar()
+
+"""
+  #self.minimax(self.tablero, 0, False, move=pos)
 
         # Algoritmo Minimax
         def minimax(self, board, depth, is_maximizing, move=None):
@@ -272,12 +295,6 @@ class MiClase:
 
 
 
-
-
-#motor = MiClase()
-#motor.ejecutar()
-
-"""
 
         #pocision_caballo = self.find_position(self.turno.representacion)
         #movimiento = (self.directions[direccion][1], self.directions[direccion][2])
