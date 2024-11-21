@@ -39,6 +39,16 @@ class MiClase:
     def __init__(self, grid=None, player=None, maquina=None, turno="o"):
         #ATRIBUTOS ENTORNO
         self.tablero = self.generate_grid()
+        self.tablero = [
+            [   0,    0, 0, 0, 0,  0,    0, "x2"],
+            [   0, "x2", 0, 0, 0,  10,    0,    0],
+            [   0,    0, 0, 0, 0,  0,    0,    0],
+            [   0,    8, 0, 0, 0,  0, 0,    0],
+            [   3,    0, 0, 'HB', 0,  0,    0,    0],
+            [   0,    0, 0, 0, 0,'HW',   0,    0],
+            [   0,    0, 0, 0, 0,  0,    0,    5],
+            ["x2",    0, 0, 0, 0,  0,    2,    0],
+        ]
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -186,13 +196,6 @@ class MiClase:
 
 
 
-    def calculate_heuristica(self, valor):
-        if valor == "x2":
-            return 5
-        
-        return valor
-
-
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
@@ -204,11 +207,23 @@ class MiClase:
         # MOVER EL CABALLO  
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
-
+            game_clone = copy.deepcopy(self)
+            game_clone.moveHorse(pos)
+            game_clone.pintarTrablero()
 
 
             # Calcular el valor de esta jugada
-            score = self.calculate_heuristica(self.tablero[pos[0]][pos[1]])
+            #score = 
+            score = game_clone.player.score - game_clone.maquina.score
+            print(game_clone.player.score - game_clone.maquina.score)
+
+            score = self.minimax(game_clone, 2, False)
+
+            """
+            #putos que obtengo en la jugada
+            #puntos que obtiene mi rival en la jugada
+            """
+
 
 
 
@@ -221,84 +236,76 @@ class MiClase:
                 best_score = score
                 best_move = pos
 
+
         if best_score == 0:
             best_move = random.choice(avalible)
         
 
         return best_move
+    
 
 
 
+    def minimax(self, board, depth, is_maximizing, move=None):
+        winner = board.check_winner()
+        
+        if depth == 3:
+            return board.player.score - board.maquina.score
+        
+        # Si la IA gana, devuelve +1
+        if winner == 2:
+            return 1000
+        
+        # Si el humano gana, devuelve -1
+        if winner == 1:
+            return -1000
+        
+        # Si es empate, devuelve 0
+        #if board.is_full(board):
+        #    return 0
 
-
-
-
-
-
-
-#motor = MiClase()
-#motor.ejecutar()
-
-"""
-  #self.minimax(self.tablero, 0, False, move=pos)
-
-        # Algoritmo Minimax
-        def minimax(self, board, depth, is_maximizing, move=None):
-            winner = self.check_winner(board)
+        if move is not None:
+            print(f"Evaluando movimiento: {self.tablero}")
             
-            # Si la IA gana, devuelve +1
-            if winner == 2:
-                return 1
+
+        # Jugador IA (maximizar)
+        if is_maximizing:
+            best_score = -math.inf
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j] == 0:
+                        board[i][j] = 2
+                        score = self.minimax(board, depth + 1, False, move=(i, j))
+                        board[i][j] = 0
+                        best_score = max(score, best_score)
+                        if move is not None:
+                            print(f"Puntaje del movimiento {move}: {score}")
+            return best_score
+
+
+        # Jugador humano (minimizar)
+        else:
+            avalible = board.calculate_available_moves()
+            best_score = math.inf
+
+            # MOVER EL CABALLO  
+            for i, pos in enumerate(avalible):
+                # Simular la jugada de la IA
+                game_clone = copy.deepcopy(board)
+                game_clone.moveHorse(pos)
+                game_clone.pintarTrablero()
+
+                #calcilar nodo
+                score = board.minimax(game_clone, depth + 1, False)
+
+                min(score, best_score)
+                print(f"Puntaje del movimiento {move}: {score}")
             
-            # Si el humano gana, devuelve -1
-            if winner == 1:
-                return -1
-            
-            # Si es empate, devuelve 0
-            if self.is_full(board):
-                return 0
-
-            if move is not None:
-                print(f"Evaluando movimiento: {self.tablero}")
-                
-
-            # Jugador IA (maximizar)
-            if is_maximizing:
-                best_score = -math.inf
-                for i in range(3):
-                    for j in range(3):
-                        if board[i][j] == 0:
-                            board[i][j] = 2
-                            score = self.minimax(board, depth + 1, False, move=(i, j))
-                            board[i][j] = 0
-                            best_score = max(score, best_score)
-                            if move is not None:
-                                print(f"Puntaje del movimiento {move}: {score}")
-                return best_score
-
-
-            # Jugador humano (minimizar)
-            else:
-                best_score = math.inf
-                for i in range(3):
-                    for j in range(3):
-                        if board[i][j] == 0:
-                            board[i][j] = 1
-                            score = self.minimax(board, depth + 1, True, move=(i, j))
-                            board[i][j] = 0
-                            best_score = min(score, best_score)
-                            if move is not None:
-                                print(f"Puntaje del movimiento {move}: {score}")
-                return best_score
+            return best_score
+        
 
 
 
-
-
-
-        #pocision_caballo = self.find_position(self.turno.representacion)
-        #movimiento = (self.directions[direccion][1], self.directions[direccion][2])
-        #nueva_fila, nueva_columna = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
 
 
     def pintarTrablero(self):
@@ -310,7 +317,7 @@ class MiClase:
             posibles_movimientos.append(resultado)
 
         
-        os.system('cls')
+        #os.system('cls')
         print(self.player)
         print(self.maquina)
         for x, row in enumerate(self.tablero):
@@ -339,6 +346,32 @@ class MiClase:
             print("")
         
         print(f"error: {self.alert}")
+
+
+
+
+
+
+
+
+
+
+#motor = MiClase()
+#motor.ejecutar()
+
+"""
+  #self.minimax(self.tablero, 0, False, move=pos)
+
+        # Algoritmo Minimax
+        
+
+        
+
+        #pocision_caballo = self.find_position(self.turno.representacion)
+        #movimiento = (self.directions[direccion][1], self.directions[direccion][2])
+        #nueva_fila, nueva_columna = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
+
+ 
 
 
 
