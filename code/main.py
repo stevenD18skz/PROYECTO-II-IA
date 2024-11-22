@@ -4,6 +4,12 @@ import os
 import random
 import time
 
+datos_ia = {
+    "Bruta": [3],
+    "media": [5],
+    "avanzada": [7]
+}
+
 
 class jugador:
     def __init__(self, nombre, representacion):
@@ -13,7 +19,7 @@ class jugador:
         self.representacion = representacion
     
     def setScore(self, new_score):
-        print(f"el nombre {self.nombre} se le agrega {new_score}")
+        #print(f"el nombre {self.nombre} se le agrega {new_score}")
         if self.bono:
             self.score += new_score * 2
             self.bono = False
@@ -36,18 +42,19 @@ class jugador:
 
 
 class MiClase:
-    def __init__(self, grid=None, player=None, maquina=None, turno="o"):
+    def __init__(self, grid=None, player=None, maquina=None, turno="o", dificultad="bruta"):
         #ATRIBUTOS ENTORNO
+        self.dificultad = dificultad
         self.tablero = self.generate_grid()
         self.tablero = [
-            [   0,    0, 0, 0, 0,  0,    0, "x2"],
-            [   0, "x2", 0, 0, 0,  10,    0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            [   0,    8, 0, 0, 0,  0, 0,    0],
-            [   3,    0, 0, 'HB', 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,'HW',   0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    5],
-            ["x2",    0, 0, 0, 0,  0,    2,    0],
+            [   0,    0, 0, 0, 0,  0,    0, 0],
+            [   0, 4, 0, 0, 0,  0,    0,    0],
+            [   0,    5, 0, 0, 0,  0,    0,    0],
+            [   4,    0, 0, 0, 0,  0, 0,    0],
+            [   0,    0, 'HB', 0, 0,  0,    0,    0],
+            [   3,    0, 0,     0, 'HW', 0,   0,    0],
+            [   0,    0, 0,     0, 0,  0,    0,    0],
+            [0,    0, 0, 0,  0,  0,    0,    12],
         ]
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
@@ -59,8 +66,6 @@ class MiClase:
             ("L izquierda arriba", -1, -2),  # Una hacia atrás, dos a la izquierda
             ("L arriba izquierda", -2, -1),  # Dos hacia atrás, una a la izquierda
         ]
-
-
         #MAQUINA JUGADOR
         self.player = jugador("STEVEN", "HB")
         self.maquina = jugador("MACHINE", "HW")
@@ -126,17 +131,14 @@ class MiClase:
         # Si ya no quedan puntos, declarar ganador
         if not puntos_disponibles:
             if self.player.score > self.maquina.score:
-                #print(f"¡El ganador es {self.player.nombre} con {self.player.score} puntos!")
                 self.winner = "HB"
             elif self.maquina.score > self.player.score:
-                #print(f"¡El ganador es {self.maquina.nombre} con {self.maquina.score} puntos!!!!!!")
                 self.winner = "HW"
             else:
                 #print("¡Es un empate!")
                 self.winner = "DRAW"
         else:
             pass
-            #print("El juego aún no ha terminado, quedan puntos por recoger.")
 
 
 
@@ -209,37 +211,16 @@ class MiClase:
             # Simular la jugada de la IA
             game_clone = copy.deepcopy(self)
             game_clone.moveHorse(pos)
-            game_clone.pintarTrablero()
 
 
             # Calcular el valor de esta jugada
-            #score = 
-            score = game_clone.player.score - game_clone.maquina.score
-            print(game_clone.player.score - game_clone.maquina.score)
-
             score = self.minimax(game_clone, 2, False)
-
-            """
-            #putos que obtengo en la jugada
-            #puntos que obtiene mi rival en la jugada
-            """
-
-
-
-
-            # Retornar el tablero y jugadores al estado original usando las copias
-
 
 
             #actualizar el mejor nodo
             if score > best_score:
                 best_score = score
                 best_move = pos
-
-
-        if best_score == 0:
-            best_move = random.choice(avalible)
-        
 
         return best_move
     
@@ -249,7 +230,7 @@ class MiClase:
     def minimax(self, board, depth, is_maximizing, move=None):
         winner = board.check_winner()
         
-        if depth == 3:
+        if depth == datos_ia[self.dificultad][0]:
             return board.player.score - board.maquina.score
         
         # Si la IA gana, devuelve +1
@@ -264,22 +245,27 @@ class MiClase:
         #if board.is_full(board):
         #    return 0
 
-        if move is not None:
-            print(f"Evaluando movimiento: {self.tablero}")
+        #if move is not None:
+            #print(f"Evaluando movimiento: {self.tablero}")
             
 
         # Jugador IA (maximizar)
         if is_maximizing:
+            avalible = board.calculate_available_moves()
             best_score = -math.inf
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == 0:
-                        board[i][j] = 2
-                        score = self.minimax(board, depth + 1, False, move=(i, j))
-                        board[i][j] = 0
-                        best_score = max(score, best_score)
-                        if move is not None:
-                            print(f"Puntaje del movimiento {move}: {score}")
+
+            # MOVER EL CABALLO  
+            for i, pos in enumerate(avalible):
+                # Simular la jugada de la IA
+                game_clone = copy.deepcopy(board)
+                game_clone.moveHorse(pos)
+
+                #calcular nodo
+                score = game_clone.minimax(game_clone, depth + 1, False)
+                #print(f"{"    "*depth}{depth} ==> Puntaje del movimiento 🏮🏮🏮{pos}: {score}")
+
+                best_score = max(score, best_score)
+            
             return best_score
 
 
@@ -293,13 +279,12 @@ class MiClase:
                 # Simular la jugada de la IA
                 game_clone = copy.deepcopy(board)
                 game_clone.moveHorse(pos)
-                game_clone.pintarTrablero()
 
-                #calcilar nodo
-                score = board.minimax(game_clone, depth + 1, False)
+                #calcular nodo
+                score = game_clone.minimax(game_clone, depth + 1, True)
 
-                min(score, best_score)
-                print(f"Puntaje del movimiento {move}: {score}")
+                best_score = min(score, best_score)
+                #print(f"{"    "*depth}{depth} ==> Puntaje del movimiento 🏮🏮🏮{pos}: {score}")
             
             return best_score
         
@@ -308,7 +293,7 @@ class MiClase:
 
 
 
-    def pintarTrablero(self):
+    def pintarTrablero(self, depth=0):
         posibles_movimientos = []
         for i in range(8):
             pocision_caballo = self.find_position(self.turno.representacion)
@@ -318,96 +303,45 @@ class MiClase:
 
         
         #os.system('cls')
-        print(self.player)
-        print(self.maquina)
+        print(f"{"    "*depth}{self.player}")
+        self.copiar += f"{"    "*depth}{self.player}" + "\n"
+
+        print(f"{"    "*depth}{self.maquina}")
+        self.copiar += f"{"    "*depth}{self.maquina}" + "\n"
+
         for x, row in enumerate(self.tablero):
+            print(f"{"    "*depth}", end="")
+            self.copiar +=  f"{"    "*depth}"
             for y, value in enumerate(row):
                 if value == 'HW':
                     # Imprimir "H" en verde
                     print(f"\033[91m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
 
                 elif value == 'HB':
                     # Imprimir "H" en verde
                     print(f"\033[92m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
 
                 elif (x, y) in posibles_movimientos:
                     print(f"\033[92m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
 
                 elif value == 'x2':
                     # Imprimir "H" en verde
                     print(f"\033[93m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
                 
                 elif value != 0:
                     print(f"\033[96m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
 
                 else:
                     print(f"\033[90m{value:<2}\033[0m", end="  ")
+                    self.copiar += f"{value:<2}"
 
             print("")
-        
-        print(f"error: {self.alert}")
-
-
-
-
-
-
-
-
-
-
-#motor = MiClase()
-#motor.ejecutar()
-
-"""
-  #self.minimax(self.tablero, 0, False, move=pos)
-
-        # Algoritmo Minimax
+            self.copiar += "\n"
         
 
-        
 
-        #pocision_caballo = self.find_position(self.turno.representacion)
-        #movimiento = (self.directions[direccion][1], self.directions[direccion][2])
-        #nueva_fila, nueva_columna = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
-
- 
-
-
-
-    def ejecutar(self):
-        while True:
-            self.pintarTrablero()
-
-            while True:
-                try:
-                    played = int(input("Selecciona el movimiento: "))
-                    break
-                except:
-                    print("no")
-
-            self.moveHorse(played-1)
-
-
-        self.tablero = [
-            [   8,    0, 0, 0, 0,  4,    0, "x2"],
-            [   0, "x2", 1, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 9, 0,  0,    0,    0],
-            [   0,    7, 0, 0, 3,  0, "x2",    0],
-            [   0,    0, 0, 'HW', 0,  0,    0,    0],
-            [  10,    0, 0, 0, 6,'HB',   0,    0],
-            [   0,    0, 5, 0, 0,  0,    2,    0],
-            ["x2",    0, 0, 0, 0,  0,    0,    0],
-        ]
-        self.tablero = [
-            [   0,    0, 0, 0, 0,  0,    0, "x2"],
-            [   0, "x2", 0, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,  0, "x2",    0],
-            [   3,    0, 0, 'HB', 0,  0,    0,    0],
-            [   0,    0, 0, 0, 0,'HW',   0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            ["x2",    0, 0, 0, 0,  0,    2,    0],
-        ]
-
-"""

@@ -38,7 +38,7 @@ class SmartHorsesBoard:
         self.black_knight = pygame.transform.scale(self.black_knight, (SQUARE_SIZE, SQUARE_SIZE))
         
         # Tablero de juego
-        self.back = MiClase()
+        self.back = MiClase(dificultad="media")
 
 
 
