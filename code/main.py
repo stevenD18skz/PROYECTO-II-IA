@@ -4,12 +4,6 @@ import os
 import random
 import time
 
-datos_ia = {
-    "Bruta": [3],
-    "media": [5],
-    "avanzada": [7]
-}
-
 
 class jugador:
     def __init__(self, nombre, representacion):
@@ -19,7 +13,6 @@ class jugador:
         self.representacion = representacion
     
     def setScore(self, new_score):
-        #print(f"el nombre {self.nombre} se le agrega {new_score}")
         if self.bono:
             self.score += new_score * 2
             self.bono = False
@@ -42,9 +35,14 @@ class jugador:
 
 
 class MiClase:
-    def __init__(self, grid=None, player=None, maquina=None, turno="o", dificultad="bruta"):
+    def __init__(self, dificultad="facil"):
+        #MAQUINA JUGADOR
+        self.player = jugador("STEVEN", "HB")
+        self.maquina = jugador("MACHINE", "HW")
+        self.turno = self.player
+
+
         #ATRIBUTOS ENTORNO
-        self.dificultad = dificultad
         self.tablero = self.generate_grid()
         self.tablero = [
             [   0,    0, 0, 0, 0,  0,    0, 0],
@@ -66,15 +64,16 @@ class MiClase:
             ("L izquierda arriba", -1, -2),  # Una hacia atrás, dos a la izquierda
             ("L arriba izquierda", -2, -1),  # Dos hacia atrás, una a la izquierda
         ]
-        #MAQUINA JUGADOR
-        self.player = jugador("STEVEN", "HB")
-        self.maquina = jugador("MACHINE", "HW")
-        self.turno = self.maquina
-
 
         #ATRIBUTOS JUEGO
         self.alert = ""
         self.winner = None
+        self.datos_ia = {
+            "facil": [3],
+            "media": [5],
+            "avanzada": [7]
+        }
+        self.dificultad = dificultad
 
 
 
@@ -102,8 +101,9 @@ class MiClase:
                     grid[x][y] = "x2"
                     break
         
-        # Generar posiciones aleatorias para los caballos 'HW' y 'HB'
-        for horse in ['HW', 'HB']:
+        # Generar posiciones aleatorias para los caballos de maquina y player
+        print(self.maquina)
+        for horse in [self.maquina.representacion, self.player.representacion]:
             while True:
                 x, y = random.randint(0, 7), random.randint(0, 7)
                 if grid[x][y] == 0:
@@ -131,11 +131,10 @@ class MiClase:
         # Si ya no quedan puntos, declarar ganador
         if not puntos_disponibles:
             if self.player.score > self.maquina.score:
-                self.winner = "HB"
+                self.winner = self.player.representacion
             elif self.maquina.score > self.player.score:
-                self.winner = "HW"
+                self.winner = self.maquina.representacion
             else:
-                #print("¡Es un empate!")
                 self.winner = "DRAW"
         else:
             pass
@@ -155,7 +154,7 @@ class MiClase:
 
         final = []
         for i in resultado:
-            if self.tablero[i[0]][i[1]] not in ["HB", "HW"]:
+            if self.tablero[i[0]][i[1]] not in [ self.player.representacion,  self.maquina.representacion]:
                 final.append(i)
 
         return final
@@ -165,7 +164,7 @@ class MiClase:
  
     def moveHorse(self, tupla = ""):
         if tupla not in self.calculate_available_moves():
-            self.alert = "movimiento invalido"
+            self.alert = "Movimiento invalido"
             return
 
         fila_actual, columna_actual = self.find_position(self.turno.representacion)
@@ -192,8 +191,9 @@ class MiClase:
         
         else:
             self.turno = self.player
-   
+
         self.alert = ""
+   
 
 
 
@@ -201,6 +201,7 @@ class MiClase:
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
+        self.alert = "sdafafasddddddddddddddddddd"
         best_score = -math.inf
         best_move = None
         avalible = self.calculate_available_moves()
@@ -230,7 +231,7 @@ class MiClase:
     def minimax(self, board, depth, is_maximizing, move=None):
         winner = board.check_winner()
         
-        if depth == datos_ia[self.dificultad][0]:
+        if depth == self.datos_ia[self.dificultad][0]:
             return board.player.score - board.maquina.score
         
         # Si la IA gana, devuelve +1
@@ -293,55 +294,5 @@ class MiClase:
 
 
 
-    def pintarTrablero(self, depth=0):
-        posibles_movimientos = []
-        for i in range(8):
-            pocision_caballo = self.find_position(self.turno.representacion)
-            movimiento = (self.directions[i][1], self.directions[i][2])
-            resultado = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
-            posibles_movimientos.append(resultado)
-
-        
-        #os.system('cls')
-        print(f"{"    "*depth}{self.player}")
-        self.copiar += f"{"    "*depth}{self.player}" + "\n"
-
-        print(f"{"    "*depth}{self.maquina}")
-        self.copiar += f"{"    "*depth}{self.maquina}" + "\n"
-
-        for x, row in enumerate(self.tablero):
-            print(f"{"    "*depth}", end="")
-            self.copiar +=  f"{"    "*depth}"
-            for y, value in enumerate(row):
-                if value == 'HW':
-                    # Imprimir "H" en verde
-                    print(f"\033[91m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-
-                elif value == 'HB':
-                    # Imprimir "H" en verde
-                    print(f"\033[92m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-
-                elif (x, y) in posibles_movimientos:
-                    print(f"\033[92m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-
-                elif value == 'x2':
-                    # Imprimir "H" en verde
-                    print(f"\033[93m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-                
-                elif value != 0:
-                    print(f"\033[96m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-
-                else:
-                    print(f"\033[90m{value:<2}\033[0m", end="  ")
-                    self.copiar += f"{value:<2}"
-
-            print("")
-            self.copiar += "\n"
-        
-
-
+    def set_difficulty(self, dif):
+        self.dificultad = dif
