@@ -34,7 +34,7 @@ class jugador:
 
 
 
-class MiClase:
+class Game:
     def __init__(self, dificultad="facil"):
         #MAQUINA JUGADOR
         self.player = jugador("STEVEN", "HB")
@@ -42,18 +42,9 @@ class MiClase:
         self.turno = self.player
 
 
+
         #ATRIBUTOS ENTORNO
         self.tablero = self.generate_grid()
-        self.tablero = [
-            [   0,    0, 0, 0, 0,  0,    0, 0],
-            [   0, 4, 0, 0, 0,  0,    0,    0],
-            [   0,    5, 0, 0, 0,  0,    0,    0],
-            [   4,    0, 0, 0, 0,  0, 0,    0],
-            [   0,    0, 'HB', 0, 0,  0,    0,    0],
-            [   3,    0, 0,     0, 'HW', 0,   0,    0],
-            [   0,    0, 0,     0, 0,  0,    0,    0],
-            [0,    0, 0, 0,  0,  0,    0,    12],
-        ]
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -65,6 +56,8 @@ class MiClase:
             ("L arriba izquierda", -2, -1),  # Dos hacia atrás, una a la izquierda
         ]
 
+
+
         #ATRIBUTOS JUEGO
         self.alert = ""
         self.winner = None
@@ -74,6 +67,7 @@ class MiClase:
             "avanzada": [7]
         }
         self.dificultad = dificultad
+
 
 
 
@@ -102,7 +96,6 @@ class MiClase:
                     break
         
         # Generar posiciones aleatorias para los caballos de maquina y player
-        print(self.maquina)
         for horse in [self.maquina.representacion, self.player.representacion]:
             while True:
                 x, y = random.randint(0, 7), random.randint(0, 7)
@@ -112,6 +105,7 @@ class MiClase:
         
         
         return grid
+
 
 
 
@@ -136,9 +130,6 @@ class MiClase:
                 self.winner = self.maquina.representacion
             else:
                 self.winner = "DRAW"
-        else:
-            pass
-
 
 
 
@@ -162,10 +153,11 @@ class MiClase:
 
 
  
-    def moveHorse(self, tupla = ""):
-        if tupla not in self.calculate_available_moves():
-            self.alert = "Movimiento invalido"
-            return
+    def moveHorse(self, tupla = "", isIA = False):
+        if not isIA:
+            if tupla not in self.calculate_available_moves():
+                self.alert = "Movimiento invalido"
+                return
 
         fila_actual, columna_actual = self.find_position(self.turno.representacion)
         nueva_fila, nueva_columna = tupla
@@ -201,7 +193,7 @@ class MiClase:
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
-        self.alert = "sdafafasddddddddddddddddddd"
+        self.alert = "IA PENSANDO"
         best_score = -math.inf
         best_move = None
         avalible = self.calculate_available_moves()
@@ -211,7 +203,7 @@ class MiClase:
         for i, pos in enumerate(avalible):
             # Simular la jugada de la IA
             game_clone = copy.deepcopy(self)
-            game_clone.moveHorse(pos)
+            game_clone.moveHorse(pos, True)
 
 
             # Calcular el valor de esta jugada
@@ -228,29 +220,26 @@ class MiClase:
 
 
 
-    def minimax(self, board, depth, is_maximizing, move=None):
-        winner = board.check_winner()
+    def minimax(self, board, depth, is_maximizing):
+        board.check_winner()
+        
+        # Si la IA gana, devuelve +1
+        if self.winner == self.maquina:
+            return 1000
+        
+        # Si el humano gana, devuelve -1
+        if self.winner == self.player:
+            return -1000
+        
+        if self.winner == "DRAW":
+            return 0
         
         if depth == self.datos_ia[self.dificultad][0]:
             return board.player.score - board.maquina.score
         
-        # Si la IA gana, devuelve +1
-        if winner == 2:
-            return 1000
-        
-        # Si el humano gana, devuelve -1
-        if winner == 1:
-            return -1000
-        
-        # Si es empate, devuelve 0
-        #if board.is_full(board):
-        #    return 0
-
-        #if move is not None:
-            #print(f"Evaluando movimiento: {self.tablero}")
             
 
-        # Jugador IA (maximizar)
+        # IA (maximizar)
         if is_maximizing:
             avalible = board.calculate_available_moves()
             best_score = -math.inf
@@ -259,7 +248,7 @@ class MiClase:
             for i, pos in enumerate(avalible):
                 # Simular la jugada de la IA
                 game_clone = copy.deepcopy(board)
-                game_clone.moveHorse(pos)
+                game_clone.moveHorse(pos, True)
 
                 #calcular nodo
                 score = game_clone.minimax(game_clone, depth + 1, False)
@@ -270,7 +259,7 @@ class MiClase:
             return best_score
 
 
-        # Jugador humano (minimizar)
+        # contrario (minimizar)
         else:
             avalible = board.calculate_available_moves()
             best_score = math.inf
@@ -279,7 +268,7 @@ class MiClase:
             for i, pos in enumerate(avalible):
                 # Simular la jugada de la IA
                 game_clone = copy.deepcopy(board)
-                game_clone.moveHorse(pos)
+                game_clone.moveHorse(pos, True)
 
                 #calcular nodo
                 score = game_clone.minimax(game_clone, depth + 1, True)

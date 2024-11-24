@@ -1,5 +1,5 @@
 import pygame
-from main import *
+from game import *
 
 # Inicializar Pygame
 pygame.init()
@@ -36,7 +36,7 @@ COOL_DARK = (120, 160, 255)   # Color frío oscuro (para el jugador)
 class SmartHorsesBoard:
     def __init__(self):
         # Tablero de juego
-        self.back = MiClase()
+        self.back = Game()
 
         # Cargar las imágenes de los caballos
         self.white_knight = pygame.image.load(f'./image/{self.back.maquina.representacion}.png')
@@ -152,58 +152,47 @@ class SmartHorsesBoard:
 
 
 
-    def get_square_under_mouse(self, pos):
-        if self.back.winner:  # Si ya hay un ganador, no permitir más movimientos
-            return
-
-        # Calcular la posición a la que movió el jugador
+    def get_square_under_mouse(self, pos ): 
         x, y = pos
         row = y // SQUARE_SIZE
         col = x // SQUARE_SIZE
 
         # Mover ficha del jugador
-        if self.back.moveHorse(tupla=(row, col)):  # Verificar si el movimiento es válido
-            self.back.check_winner()  # Verificar si hay un ganador
+        self.back.moveHorse(tupla=(row, col))  # Verificar si el movimiento es válido
+        
+        if self.back.turno.representacion != self.back.maquina.representacion: #si se movio
+            return True
+        
+        return False
+
         
 
-        if self.back.turno.representacion != self.back.maquina.representacion:
-            print("ya cambiooooooooooooooooooooooooooo")
-        
-        else:
-            print("nooooooooooooooooooooooooooooooooooooooooooooo")
-
-        return (row, col)
 
 
 
 
 
-
-# Clase para manejar la interfaz de datos
+# Modificación del InfoPanel para incluir la dificultad
 class InfoPanel:
     def __init__(self):
         self.font = pygame.font.SysFont(None, 30)
 
-
-    def draw(self, win, turn, score_white, score_black, alert, back_info):
+    def draw(self, win, turn, score_white, score_black, alert, back_info, difficulty):
         # Fondo del panel de información
         pygame.draw.rect(win, INFO_BG_COLOR, (BOARD_WIDTH, 0, INFO_WIDTH, INFO_HEIGHT))
 
         # Texto de información
         self.draw_text(win, f"Turn: {back_info.back.maquina.representacion if turn == back_info.back.maquina.representacion else back_info.back.player.representacion}", (BOARD_WIDTH + 20, 50))
-        self.draw_text(win, f"White Score: {score_white}", (BOARD_WIDTH + 20, 150))
-        self.draw_text(win, f"Black Score: {score_black}", (BOARD_WIDTH + 20, 250))
+        self.draw_text(win, f"White Score: {score_white}", (BOARD_WIDTH + 20, 100))
+        self.draw_text(win, f"Black Score: {score_black}", (BOARD_WIDTH + 20, 150))
+        self.draw_text(win, f"Dificultad: {difficulty}", (BOARD_WIDTH + 20, 200))  # Mostrar dificultad seleccionada
 
         if alert:
-            self.draw_text(win, f"Aviso: {alert}", (BOARD_WIDTH + 20, 350))
-
-
+            self.draw_text(win, f"Aviso: {alert}", (BOARD_WIDTH + 20, 10))
 
     def draw_text(self, win, text, pos):
         text_surface = self.font.render(text, True, TEXT_COLOR)
         win.blit(text_surface, pos)
-
-
 
 
 class Button:
@@ -227,63 +216,94 @@ class Button:
 
 
 
-
-
 def main():
     win = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Smart Horses")
-    
     
     board = SmartHorsesBoard()
     info_panel = InfoPanel()
     clock = pygame.time.Clock()
 
     # Define botones
-    easy_button = Button(630, BOARD_HEIGHT - 220, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: board.back.set_difficulty("facil"))
-    medium_button = Button(630, BOARD_HEIGHT - 140, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: board.back.set_difficulty("media"))
-    hard_button = Button(630, BOARD_HEIGHT - 60, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: board.back.set_difficulty("avanzada"))
+    easy_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil"))
+    medium_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media"))
+    hard_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada"))
+    start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19))  # Botón de Start
 
     buttons = [easy_button, medium_button, hard_button]
-
-    running = True
+    game_started = False  # Variable para rastrear si el juego ha comenzado
+    difficulty_selected = False  # Variable para verificar si ya se eligió la dificultad
+    current_difficulty = "N/A"  # Variable para almacenar la dificultad actual
     machine_thinking = False
 
-    while running:
+    def set_difficulty(difficulty):
+        nonlocal current_difficulty, difficulty_selected
+        board.back.set_difficulty(difficulty)
+        if difficulty == "facil":
+            current_difficulty = "Fácil"
+        elif difficulty == "media":
+            current_difficulty = "Media"
+        elif difficulty == "avanzada":
+            current_difficulty = "Difícil"
+        difficulty_selected = True
+
+    while True:
         clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                return
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                for button in buttons:
-                    if button.is_clicked(pos):
-                        button.action()
-                if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
-                    row, col = board.get_square_under_mouse(pos)
-                    machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
+
+                if not game_started:
+                    # Habilitar selección de dificultad antes de iniciar el juego
+                    for button in buttons:
+                        if button.is_clicked(pos):
+                            button.action()
+
+                    # Iniciar el juego sólo si ya se seleccionó una dificultad
+                    if start_button.is_clicked(pos) and difficulty_selected:
+                        game_started = True  # Marcar el inicio del juego
+                        board.back.find_best_move()
+
+
+                elif game_started:
+                    # Movimiento del jugador solo si el juego ya comenzó
+                    if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
+                        if board.get_square_under_mouse(pos):
+                            machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
 
         # Dibujar el tablero, panel de información y botones
         board.draw(win)
-        info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board)
+        info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board, current_difficulty)
+
+        # Dibujar botones
         for button in buttons:
+            # Deshabilitar botones de dificultad si ya comenzó el juego
+            if game_started:
+                button.color = (200, 200, 200)  # Cambiar a un color apagado
+                button.text_color = (100, 100, 100)  # Color del texto desactivado
+                button.action = None  # Deshabilitar acción
             button.draw(win)
+
+        # Dibujar botón de Start
+        if not game_started:
+            start_button.draw(win)
 
         pygame.display.flip()
 
         # Proceso del turno de la máquina
         if machine_thinking and not board.back.winner:
             board.back.alert = "Pensando..."
-            pygame.display.flip()  # Reflejar el estado de "Pensando..." antes de calcular el movimiento
+            pygame.display.flip()  # Mostrar el estado de "Pensando..." antes de calcular el movimiento
 
             move = board.back.find_best_move()
             board.back.moveHorse(tupla=move)
             board.back.check_winner()
             board.back.alert = None  # Limpiar alerta
             machine_thinking = False
-
-
-    pygame.quit()
 
 
 
