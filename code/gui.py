@@ -158,12 +158,9 @@ class SmartHorsesBoard:
         col = x // SQUARE_SIZE
 
         # Mover ficha del jugador
-        self.back.moveHorse(tupla=(row, col))  # Verificar si el movimiento es válido
-        
-        if self.back.turno.representacion != self.back.maquina.representacion: #si se movio
-            return True
-        
-        return False
+        return self.back.moveHorse(tupla=(row, col))
+         
+         
 
         
 
@@ -215,7 +212,6 @@ class Button:
 
 
 
-
 def main():
     win = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Smart Horses")
@@ -228,13 +224,13 @@ def main():
     easy_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil"))
     medium_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media"))
     hard_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada"))
-    start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19))  # Botón de Start
+    start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19), lambda: set_difficulty)  # Botón de Start
 
-    buttons = [easy_button, medium_button, hard_button]
+    buttons = [easy_button, medium_button, hard_button, start_button]
     game_started = False  # Variable para rastrear si el juego ha comenzado
     difficulty_selected = False  # Variable para verificar si ya se eligió la dificultad
     current_difficulty = "N/A"  # Variable para almacenar la dificultad actual
-    machine_thinking = False
+    machine_thinking = True
 
     def set_difficulty(difficulty):
         nonlocal current_difficulty, difficulty_selected
@@ -247,8 +243,12 @@ def main():
             current_difficulty = "Difícil"
         difficulty_selected = True
 
+    blink_timer = 0  # Temporizador para el efecto parpadeante
+
     while True:
         clock.tick(30)
+        blink_timer += 1
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -266,14 +266,17 @@ def main():
                     # Iniciar el juego sólo si ya se seleccionó una dificultad
                     if start_button.is_clicked(pos) and difficulty_selected:
                         game_started = True  # Marcar el inicio del juego
-                        board.back.find_best_move()
-
 
                 elif game_started:
+                    if board.back.turno == board.back.player.representacion:
+                        print("si es el movimiento del jugador")
+
                     # Movimiento del jugador solo si el juego ya comenzó
-                    if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
+                    elif pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
                         if board.get_square_under_mouse(pos):
                             machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
+
+
 
         # Dibujar el tablero, panel de información y botones
         board.draw(win)
@@ -288,25 +291,40 @@ def main():
                 button.action = None  # Deshabilitar acción
             button.draw(win)
 
-        # Dibujar botón de Start
-        if not game_started:
-            start_button.draw(win)
-
-        pygame.display.flip()
 
         # Proceso del turno de la máquina
-        if machine_thinking and not board.back.winner:
+        if machine_thinking and not board.back.winner and  game_started:
             board.back.alert = "Pensando..."
             pygame.display.flip()  # Mostrar el estado de "Pensando..." antes de calcular el movimiento
 
             move = board.back.find_best_move()
-            board.back.moveHorse(tupla=move)
+            board.back.moveHorse(move, True)
             board.back.check_winner()
             board.back.alert = None  # Limpiar alerta
             machine_thinking = False
 
 
+        # Fondo negro con texto parpadeante antes de que comience el juego
+        if not game_started:
+            # Fondo negro solo en la región del tablero
+            overlay = pygame.Surface((BOARD_WIDTH, WINDOW_HEIGHT))  # Tamaño del área del tablero
+            overlay.set_alpha(245)  # Establecer la transparencia (255 es opaco, 0 es totalmente transparente)
+            overlay.fill((10, 10, 10))  # Color del fondo negro
+            win.blit(overlay, (0, 0))  # Dibujar la superficie en la ventana
+                    
+            
+            # Efecto de parpadeo
+            if (blink_timer // 30) % 2 == 0:  # Alternar visibilidad cada 15 frames
+                font = pygame.font.SysFont(None, 64)
+                text_surface = font.render("Esperando...", True, (255, 255, 255))
+                text_rect = text_surface.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
+                win.blit(text_surface, text_rect)
+                
+        pygame.display.flip()
 
+
+
+ 
 
 
 if __name__ == "__main__":

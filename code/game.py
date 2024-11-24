@@ -39,7 +39,7 @@ class Game:
         #MAQUINA JUGADOR
         self.player = jugador("STEVEN", "HB")
         self.maquina = jugador("MACHINE", "HW")
-        self.turno = self.player
+        self.turno = self.maquina
 
 
 
@@ -67,6 +67,8 @@ class Game:
             "avanzada": [7]
         }
         self.dificultad = dificultad
+
+        
 
 
 
@@ -152,12 +154,12 @@ class Game:
 
 
 
- 
+    #aqui
     def moveHorse(self, tupla = "", isIA = False):
         if not isIA:
             if tupla not in self.calculate_available_moves():
                 self.alert = "Movimiento invalido"
-                return
+                return False
 
         fila_actual, columna_actual = self.find_position(self.turno.representacion)
         nueva_fila, nueva_columna = tupla
@@ -185,7 +187,11 @@ class Game:
             self.turno = self.player
 
         self.alert = ""
+        return True
    
+
+
+
 
 
 
@@ -224,18 +230,18 @@ class Game:
         board.check_winner()
         
         # Si la IA gana, devuelve +1
-        if self.winner == self.maquina:
+        if board.winner == board.maquina.representacion:
             return 1000
         
         # Si el humano gana, devuelve -1
-        if self.winner == self.player:
+        if board.winner == board.player.representacion:
             return -1000
         
-        if self.winner == "DRAW":
+        if board.winner == "DRAW":
             return 0
         
-        if depth == self.datos_ia[self.dificultad][0]:
-            return board.player.score - board.maquina.score
+        if depth == board.datos_ia[board.dificultad][0]:
+            return board.maquina.score - board.player.score
         
             
 
