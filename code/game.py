@@ -199,6 +199,7 @@ class Game:
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
+        inicio = time.time()
         self.alert = "IA PENSANDO"
         best_score = -math.inf
         best_move = None
@@ -220,6 +221,10 @@ class Game:
             if score > best_score:
                 best_score = score
                 best_move = pos
+
+        final = time.time()
+
+        print(f"tiempo total {final - inicio}")
 
         return best_move
     
