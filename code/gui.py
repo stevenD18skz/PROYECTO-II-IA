@@ -272,11 +272,11 @@ def main():
                     if start_button.is_clicked(pos) and difficulty_selected:
                         game_started = True  # Marcar el inicio del juego
 
-                elif game_started:
+                #elif game_started:
                     # Movimiento del jugador solo si el juego ya comenzó
-                    if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
-                        if board.get_square_under_mouse(pos):
-                            machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
+                    #if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
+                        #if board.get_square_under_mouse(pos):
+                            #machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
 
 
 
@@ -299,20 +299,6 @@ def main():
 
 
 
-        # Proceso del turno de la máquina
-        if machine_thinking and not board.back.winner and  game_started:
-            board.back.alert = "Pensando..."
-            pygame.display.flip()  # Mostrar el estado de "Pensando..." antes de calcular el movimiento
-
-            move = board.back.find_best_move()
-            board.back.moveHorse(move, True)
-            board.back.check_winner()
-            board.back.alert = None  # Limpiar alerta
-            machine_thinking = False
-
-
-
-
         # Fondo negro con texto parpadeante antes de que comience el juego
         if not game_started:
             # Fondo negro solo en la región del tablero
@@ -328,6 +314,20 @@ def main():
                 text_surface = font.render("Esperando...", True, (255, 255, 255))
                 text_rect = text_surface.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
                 win.blit(text_surface, text_rect)
+
+
+        # Proceso del turno de la máquina
+        else:
+            board.back.alert = "Pensando..."
+            pygame.display.flip()  # Mostrar el estado de "Pensando..." antes de calcular el movimiento
+
+            move = board.back.find_best_move()
+            board.back.moveHorse(move, True)
+            board.back.check_winner()
+
+            board.back.alert = None  # Limpiar alerta
+ 
+
                 
 
                 

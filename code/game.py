@@ -249,6 +249,7 @@ class Game:
         if depth == board.datos_ia[board.dificultad][0]:
             return board.maquina.score - board.player.score
 
+
         if is_maximizing:
             avalible = board.calculate_available_moves()
             best_score = -math.inf
