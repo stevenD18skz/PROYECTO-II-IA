@@ -234,6 +234,8 @@ class Game:
     
 
 
+
+
     def minimax(self, board, depth, is_maximizing, alpha=-math.inf, beta=math.inf):
         board.check_winner()
         

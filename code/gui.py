@@ -119,36 +119,29 @@ class SmartHorsesBoard:
                     pygame.draw.rect(win, PASTEL_YELLOW, rect)
                     self.draw_text(win, str(value), rect.center)
 
+
+
         # Verificar si hay un ganador
         if self.back.winner:
-            self.display_winner(win)
+            # Crear una superficie oscura que cubra el tablero
+            overlay = pygame.Surface((BOARD_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))  # Color negro con transparencia
+
+            # Mostrar mensaje de victoria
+            font = pygame.font.SysFont(None, 64)
+            if self.back.winner != "DRAW":
+                text = f"¡Gana el Caballo {self.back.maquina.representacion}!"
+            else:
+                text = "¡Es un empate!"
+
+            #dibujart
+            text_surface = font.render(text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(BOARD_WIDTH // 2, WINDOW_HEIGHT // 2))
+            win.blit(overlay, (0, 0))
+            win.blit(text_surface, text_rect)
 
  
-
-
-
-
-    def display_winner(self, win):
-        # Crear una superficie oscura que cubra el tablero
-        overlay = pygame.Surface((BOARD_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))  # Color negro con transparencia
-
-        # Mostrar mensaje de victoria
-        font = pygame.font.SysFont(None, 64)
-        if self.back.winner == self.back.maquina.representacion:
-            text = f"¡Gana el Caballo {self.back.maquina.representacion}!"
-        elif self.back.winner == self.back.player.representacion:
-            text = f"¡Gana el Caballo {self.back.player.representacion}!"
-        else:
-            text = "¡Es un empate!"
-
-        text_surface = font.render(text, True, (255, 255, 255))
-        text_rect = text_surface.get_rect(center=(BOARD_WIDTH // 2, WINDOW_HEIGHT // 2))
-        
-        win.blit(overlay, (0, 0))
-        win.blit(text_surface, text_rect)
-
-
+ 
 
 
 
@@ -192,6 +185,9 @@ class InfoPanel:
         win.blit(text_surface, pos)
 
 
+
+
+
 class Button:
     def __init__(self, x, y, width, height, text, color, text_color, action=None):
         self.rect = pygame.Rect(x, y, width, height)
@@ -212,6 +208,8 @@ class Button:
 
 
 
+
+
 def main():
     win = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Smart Horses")
@@ -227,10 +225,14 @@ def main():
     start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19), lambda: set_difficulty)  # Botón de Start
 
     buttons = [easy_button, medium_button, hard_button, start_button]
+
+
     game_started = False  # Variable para rastrear si el juego ha comenzado
     difficulty_selected = False  # Variable para verificar si ya se eligió la dificultad
     current_difficulty = "N/A"  # Variable para almacenar la dificultad actual
     machine_thinking = True
+
+
 
     def set_difficulty(difficulty):
         nonlocal current_difficulty, difficulty_selected
@@ -244,6 +246,9 @@ def main():
         difficulty_selected = True
 
     blink_timer = 0  # Temporizador para el efecto parpadeante
+
+
+
 
     while True:
         clock.tick(30)
@@ -268,21 +273,20 @@ def main():
                         game_started = True  # Marcar el inicio del juego
 
                 elif game_started:
-                    if board.back.turno == board.back.player.representacion:
-                        print("si es el movimiento del jugador")
-
                     # Movimiento del jugador solo si el juego ya comenzó
-                    elif pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
+                    if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
                         if board.get_square_under_mouse(pos):
                             machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
 
 
 
+
+
         # Dibujar el tablero, panel de información y botones
         board.draw(win)
+
         info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board, current_difficulty)
 
-        # Dibujar botones
         for button in buttons:
             # Deshabilitar botones de dificultad si ya comenzó el juego
             if game_started:
@@ -290,6 +294,9 @@ def main():
                 button.text_color = (100, 100, 100)  # Color del texto desactivado
                 button.action = None  # Deshabilitar acción
             button.draw(win)
+
+
+
 
 
         # Proceso del turno de la máquina
@@ -302,6 +309,8 @@ def main():
             board.back.check_winner()
             board.back.alert = None  # Limpiar alerta
             machine_thinking = False
+
+
 
 
         # Fondo negro con texto parpadeante antes de que comience el juego
@@ -319,6 +328,8 @@ def main():
                 text_surface = font.render("Esperando...", True, (255, 255, 255))
                 text_rect = text_surface.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
                 win.blit(text_surface, text_rect)
+                
+
                 
         pygame.display.flip()
 
