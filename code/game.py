@@ -68,7 +68,13 @@ class Game:
         }
         self.dificultad = dificultad
 
-        
+
+        #OPTIMIZACION
+        self.avalibe_points = 10
+        self.positions_horse = {
+            self.player.representacion:  self.find_position(self.player.representacion),
+            self.maquina.representacion: self.find_position(self.maquina.representacion)
+        }
 
 
 
@@ -111,6 +117,7 @@ class Game:
 
 
 
+
     def find_position(self, object_value):
         for x, row in enumerate(self.tablero):
             for y, value in enumerate(row):
@@ -120,12 +127,10 @@ class Game:
 
 
 
-    def check_winner(self):
-        # Verificar si quedan casillas con puntos en el tablero
-        puntos_disponibles = any(isinstance(value, int) and value > 0 for row in self.tablero for value in row)
 
+    def check_winner(self):
         # Si ya no quedan puntos, declarar ganador
-        if not puntos_disponibles:
+        if not self.avalibe_points:
             if self.player.score > self.maquina.score:
                 self.winner = self.player.representacion
             elif self.maquina.score > self.player.score:
@@ -135,10 +140,11 @@ class Game:
 
 
 
+
     def calculate_available_moves(self):
         posibles_movimientos = []
         for i in range(8):
-            pocision_caballo = self.find_position(self.turno.representacion)
+            pocision_caballo = self.positions_horse[self.turno.representacion]
             movimiento = (self.directions[i][1], self.directions[i][2])
             resultado = tuple(a + b for a, b in zip(pocision_caballo, movimiento))
             posibles_movimientos.append(resultado)
@@ -154,6 +160,7 @@ class Game:
 
 
 
+
     #aqui
     def moveHorse(self, tupla = "", isIA = False):
         if not isIA:
@@ -161,7 +168,7 @@ class Game:
                 self.alert = "Movimiento invalido"
                 return False
 
-        fila_actual, columna_actual = self.find_position(self.turno.representacion)
+        fila_actual, columna_actual = self.positions_horse[self.turno.representacion]
         nueva_fila, nueva_columna = tupla
         valor = self.tablero[nueva_fila][nueva_columna]
 
@@ -169,11 +176,13 @@ class Game:
         #MOVER EL CABALLO
         self.tablero[fila_actual][columna_actual] = 0
         self.tablero[nueva_fila][nueva_columna] = self.turno.representacion
+        self.positions_horse[self.turno.representacion] = (nueva_fila, nueva_columna)
 
 
         #HACER LOS PASOS NECESARIOS SI LA CASILLA NO ES VACIA
         if isinstance(valor, int) and valor != 0:
             self.turno.setScore(valor)
+            self.avalibe_points -= 1
             
         elif valor == "x2":
             self.turno.bono = True
@@ -189,10 +198,6 @@ class Game:
         self.alert = ""
         return True
    
-
-
-
-
 
 
 
@@ -223,9 +228,7 @@ class Game:
                 best_move = pos
 
         final = time.time()
-
         print(f"tiempo total {final - inicio}")
-
         return best_move
     
 
@@ -289,9 +292,6 @@ class Game:
             
             return best_score
         
-
-
-
 
 
     def set_difficulty(self, dif):
