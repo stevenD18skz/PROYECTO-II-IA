@@ -5,12 +5,23 @@ import random
 import time
 
 
+
 class jugador:
-    def __init__(self, nombre, representacion):
+    def __init__(self, nombre, representacion, profundidad):
         self.nombre = nombre
         self.score = 0
         self.bono = False
         self.representacion = representacion
+
+
+        self.datos_ia = {
+            "facil": [3],
+            "media": [5],
+            "avanzada": [7]
+        }
+        self.profundidad_maxima = self.datos_ia[profundidad]
+
+
     
     def setScore(self, new_score):
         if self.bono:
@@ -34,11 +45,12 @@ class jugador:
 
 
 
+
 class Game:
     def __init__(self, dificultad="facil"):
         #MAQUINA JUGADOR
-        self.player = jugador("STEVEN", "HB")
-        self.maquina = jugador("MACHINE", "HW")
+        self.player = jugador("STEVEN", "HB", "facil")
+        self.maquina = jugador("MACHINE", "HW", "facil")
         self.turno = self.maquina
 
 
@@ -61,12 +73,6 @@ class Game:
         #ATRIBUTOS JUEGO
         self.alert = ""
         self.winner = None
-        self.datos_ia = {
-            "facil": [3],
-            "media": [5],
-            "avanzada": [7]
-        }
-        self.dificultad = dificultad
 
 
         #OPTIMIZACION
@@ -197,19 +203,23 @@ class Game:
 
         self.alert = ""
         return True
-   
+    
 
    
- 
+
 
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
         inicio = time.time()
         self.alert = "IA PENSANDO"
+
         best_score = -math.inf
         best_move = None
         avalible = self.calculate_available_moves()
+
+        principal = self.turno
+        contrincante = self.player if self.turno.representacion == self.maquina.representacion else self.player
 
 
         # MOVER EL CABALLO  
@@ -220,7 +230,7 @@ class Game:
 
 
             # Calcular el valor de esta jugada
-            score = self.minimax(game_clone, 2, False)
+            score = self.minimax(game_clone, 2, False, princi=principal, contra=contrincante)
 
 
             #actualizar el mejor nodo
@@ -236,7 +246,7 @@ class Game:
 
 
 
-    def minimax(self, board, depth, is_maximizing, alpha=-math.inf, beta=math.inf):
+    def minimax(self, board, depth, is_maximizing, alpha=-math.inf, beta=math.inf, princi=None, contra=None):
         board.check_winner()
         
         # Condición de victoria o empate
@@ -246,8 +256,8 @@ class Game:
             return -1000
         if board.winner == "DRAW":
             return 0
-        if depth == board.datos_ia[board.dificultad][0]:
-            return board.maquina.score - board.player.score
+        if depth == princi.profundidad_maxima[0]:
+            return princi.score - contra.score
 
 
         if is_maximizing:
@@ -256,7 +266,7 @@ class Game:
             for pos in avalible:
                 game_clone = copy.deepcopy(board)
                 game_clone.moveHorse(pos, True)
-                score = game_clone.minimax(game_clone, depth + 1, False, alpha, beta)
+                score = game_clone.minimax(game_clone, depth + 1, False, alpha, beta, princi, contra)
                 best_score = max(score, best_score)
                 alpha = max(alpha, score)
                 if beta <= alpha:
@@ -268,7 +278,7 @@ class Game:
             for pos in avalible:
                 game_clone = copy.deepcopy(board)
                 game_clone.moveHorse(pos, True)
-                score = game_clone.minimax(game_clone, depth + 1, True, alpha, beta)
+                score = game_clone.minimax(game_clone, depth + 1, True, alpha, beta, princi, contra)
                 best_score = min(score, best_score)
                 beta = min(beta, score)
                 if beta <= alpha:
