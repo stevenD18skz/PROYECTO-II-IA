@@ -199,7 +199,8 @@ class Game:
         return True
    
 
-
+   
+ 
 
 
     # Encuentra el mejor movimiento para la IA
@@ -233,65 +234,43 @@ class Game:
     
 
 
-
-    def minimax(self, board, depth, is_maximizing):
+    def minimax(self, board, depth, is_maximizing, alpha=-math.inf, beta=math.inf):
         board.check_winner()
         
-        # Si la IA gana, devuelve +1
+        # Condición de victoria o empate
         if board.winner == board.maquina.representacion:
             return 1000
-        
-        # Si el humano gana, devuelve -1
         if board.winner == board.player.representacion:
             return -1000
-        
         if board.winner == "DRAW":
             return 0
-        
         if depth == board.datos_ia[board.dificultad][0]:
             return board.maquina.score - board.player.score
-        
-            
 
-        # IA (maximizar)
         if is_maximizing:
             avalible = board.calculate_available_moves()
             best_score = -math.inf
-
-            # MOVER EL CABALLO  
-            for i, pos in enumerate(avalible):
-                # Simular la jugada de la IA
+            for pos in avalible:
                 game_clone = copy.deepcopy(board)
                 game_clone.moveHorse(pos, True)
-
-                #calcular nodo
-                score = game_clone.minimax(game_clone, depth + 1, False)
-                #print(f"{"    "*depth}{depth} ==> Puntaje del movimiento 🏮🏮🏮{pos}: {score}")
-
+                score = game_clone.minimax(game_clone, depth + 1, False, alpha, beta)
                 best_score = max(score, best_score)
-            
+                alpha = max(alpha, score)
+                if beta <= alpha:
+                    break  # Poda Beta
             return best_score
-
-
-        # contrario (minimizar)
         else:
             avalible = board.calculate_available_moves()
             best_score = math.inf
-
-            # MOVER EL CABALLO  
-            for i, pos in enumerate(avalible):
-                # Simular la jugada de la IA
+            for pos in avalible:
                 game_clone = copy.deepcopy(board)
                 game_clone.moveHorse(pos, True)
-
-                #calcular nodo
-                score = game_clone.minimax(game_clone, depth + 1, True)
-
+                score = game_clone.minimax(game_clone, depth + 1, True, alpha, beta)
                 best_score = min(score, best_score)
-                #print(f"{"    "*depth}{depth} ==> Puntaje del movimiento 🏮🏮🏮{pos}: {score}")
-            
+                beta = min(beta, score)
+                if beta <= alpha:
+                    break  # Poda Alpha
             return best_score
-        
 
 
     def set_difficulty(self, dif):
