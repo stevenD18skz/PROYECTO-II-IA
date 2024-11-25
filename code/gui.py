@@ -6,7 +6,7 @@ pygame.init()
 
 # Configuraciones básicas
 BOARD_WIDTH, BOARD_HEIGHT = 600, 600  # Tamaño del tablero
-INFO_WIDTH, INFO_HEIGHT = 300, 600    # Tamaño de la barra lateral para datos
+INFO_WIDTH, INFO_HEIGHT = 930, 600    # Tamaño de la barra lateral para datos
 WINDOW_WIDTH = BOARD_WIDTH + INFO_WIDTH  # Tamaño total de la ventana
 WINDOW_HEIGHT = BOARD_HEIGHT
 
@@ -167,15 +167,14 @@ class InfoPanel:
     def __init__(self):
         self.font = pygame.font.SysFont(None, 30)
 
-    def draw(self, win, turn, score_white, score_black, alert, back_info, difficulty):
+    def draw(self, win, turn, score_white, score_black, alert, back_info):
         # Fondo del panel de información
         pygame.draw.rect(win, INFO_BG_COLOR, (BOARD_WIDTH, 0, INFO_WIDTH, INFO_HEIGHT))
 
         # Texto de información
-        self.draw_text(win, f"Turn: {back_info.back.maquina.representacion if turn == back_info.back.maquina.representacion else back_info.back.player.representacion}", (BOARD_WIDTH + 20, 50))
-        self.draw_text(win, f"White Score: {score_white}", (BOARD_WIDTH + 20, 100))
-        self.draw_text(win, f"Black Score: {score_black}", (BOARD_WIDTH + 20, 150))
-        self.draw_text(win, f"Dificultad: {difficulty}", (BOARD_WIDTH + 20, 200))  # Mostrar dificultad seleccionada
+        self.draw_text(win, f"Turn: {turn}", (BOARD_WIDTH + 20, 50))
+        self.draw_text(win, f"White Score: {score_white} {back_info.back.maquina}", (BOARD_WIDTH + 20, 100))
+        self.draw_text(win, f"Black Score: {score_black} {back_info.back.player}", (BOARD_WIDTH + 20, 150))
 
         if alert:
             self.draw_text(win, f"Aviso: {alert}", (BOARD_WIDTH + 20, 10))
@@ -219,35 +218,30 @@ def main():
     clock = pygame.time.Clock()
 
     # Define botones
-    easy_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil"))
-    medium_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media"))
-    hard_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada"))
+    easy_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 1))
+    medium_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 1))
+    hard_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 1))
+    easy_button_2 = Button(800, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 2))
+    medium_button_2 = Button(800, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 2))
+    hard_button_2 = Button(800, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 2))
     start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19), lambda: set_difficulty)  # Botón de Start
 
-    buttons = [easy_button, medium_button, hard_button, start_button]
+    buttons = [easy_button, medium_button, hard_button, start_button, easy_button_2, medium_button_2, hard_button_2]
 
 
     game_started = False  # Variable para rastrear si el juego ha comenzado
-    difficulty_selected = False  # Variable para verificar si ya se eligió la dificultad
-    current_difficulty = "N/A"  # Variable para almacenar la dificultad actual
-    machine_thinking = True
 
 
 
-    def set_difficulty(difficulty):
-        nonlocal current_difficulty, difficulty_selected
-        board.back.set_difficulty(difficulty)
-        if difficulty == "facil":
-            current_difficulty = "Fácil"
-        elif difficulty == "media":
-            current_difficulty = "Media"
-        elif difficulty == "avanzada":
-            current_difficulty = "Difícil"
-        difficulty_selected = True
+    def set_difficulty(difficulty, p=0):
+        if p == 1:
+            board.back.player.set_difficulty(difficulty)
+        
+        else:
+            board.back.maquina.set_difficulty(difficulty)
+
 
     blink_timer = 0  # Temporizador para el efecto parpadeante
-
-
 
 
     while True:
@@ -269,23 +263,15 @@ def main():
                             button.action()
 
                     # Iniciar el juego sólo si ya se seleccionó una dificultad
-                    if start_button.is_clicked(pos) and difficulty_selected:
+                    if start_button.is_clicked(pos):
                         game_started = True  # Marcar el inicio del juego
-
-                #elif game_started:
-                    # Movimiento del jugador solo si el juego ya comenzó
-                    #if pos[0] < BOARD_WIDTH and not board.back.winner and not machine_thinking:
-                        #if board.get_square_under_mouse(pos):
-                            #machine_thinking = True  # Indicar que la máquina debe pensar en el próximo ciclo
-
-
 
 
 
         # Dibujar el tablero, panel de información y botones
         board.draw(win)
 
-        info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board, current_difficulty)
+        info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board)
 
         for button in buttons:
             # Deshabilitar botones de dificultad si ya comenzó el juego
@@ -297,6 +283,11 @@ def main():
 
 
 
+
+
+        if board.back.winner:
+            pygame.display.flip()
+            continue
 
 
         # Fondo negro con texto parpadeante antes de que comience el juego
