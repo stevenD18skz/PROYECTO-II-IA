@@ -65,9 +65,7 @@ class Game:
 
         #ATRIBUTOS ENTORNO
         self.tablero = self.generate_grid()
-        self.tablero = [['x2', 0, 0, 0, 0, 0, 0, 0], ['x2', 0, 0, 'HW', 6, 'x2', 0, 0], [0, 0, 3, 0, 0, 0, 0, 'x2'], ['HB', 0, 0, 0, 0, 0, 2, 0], [0, 0, 4, 0, 7, 9, 0, 0], [5, 0, 0, 0, 0, 0, 0, 0], [0, 8, 0, 0, 0, 0, 0, 0], [0, 0, 10, 0, 0, 1, 0, 0]]
         self.copia_tablero = copy.deepcopy(self.tablero)
-        print(self.tablero)
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -262,6 +260,7 @@ class Game:
                 best_score = score
                 best_move = pos
 
+        time.sleep(0.2)
         return best_move
     
     
@@ -315,7 +314,7 @@ class Game:
         
 
         pasos = knight_distance(ia_pos, posicion) 
-        score += max(0, 14 - pasos)
+        score -= pasos
 
         return score
 
@@ -371,7 +370,7 @@ class Game:
         
 
         pasos = knight_distance(ia_pos, posicion) 
-        score += max(0, 14 - pasos)
+        score -=pasos
 
         return score
 
@@ -387,10 +386,10 @@ class Game:
 
         if board.winner:
             if princi == board.maquina.representacion:
-                scorte_final = (board.maquina.score - board.player.score) + max(0, 6 - depth)
+                scorte_final = (board.maquina.score - board.player.score) + max(0, 10 - depth)
             
             else:
-                scorte_final = board.player.score + max(0, 6 - depth)
+                scorte_final = board.player.score + max(0, 10 - depth)
             
             return scorte_final
             
