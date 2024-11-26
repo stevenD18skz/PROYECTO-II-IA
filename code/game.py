@@ -7,17 +7,17 @@ from collections import deque
 
 
 
-class jugador:
-    def __init__(self, nombre, representacion, profundidad):
+class IA:
+    def __init__(self, nombre, representacion, profundidad, score=0):
         self.nombre = nombre
-        self.score = 0
+        self.score = score
         self.bono = False
         self.representacion = representacion
 
         self.datos_ia = {
-            "facil": [3, "f"],
-            "media": [5, "m"],
-            "avanzada": [7, "v"]
+            "facil": [3, "facil"],
+            "media": [5, "media"],
+            "avanzada": [7, "dificil"]
         }
         self.datos_inteligencia = self.datos_ia[profundidad]
 
@@ -33,9 +33,9 @@ class jugador:
 
 
 
-    # Método para clonar el jugador
+    # Método para clonar el IA
     def clone(self):
-        new_player = jugador(self.nombre, self.representacion)
+        new_player = IA(self.nombre, self.representacion)
         new_player.score = self.score
         new_player.bono = self.bono
         return new_player
@@ -43,7 +43,7 @@ class jugador:
 
 
     def __str__(self):
-        return f"Jugador: {self.nombre}, Puntuación: {self.score}, Bono: {"X2" if self.bono else "X1"}, Nivel IA {self.datos_inteligencia[1]}"
+        return f"IA: {self.nombre}, Puntuación: {self.score}, Bono: {"X2" if self.bono else "X1"}, Nivel IA {self.datos_inteligencia[1]}"
     
     
 
@@ -57,24 +57,17 @@ class jugador:
 
 class Game:
     def __init__(self):
-        #MAQUINA JUGADOR
-        self.player = jugador("STEVEN", "HB", "media")
-        self.maquina = jugador("MACHINE", "HW", "media")
+        #MAQUINA IA
+        self.player = IA("EGO", "HB", "media")
+        self.maquina = IA("DIFF", "HW", "media")
         self.turno = self.maquina
 
 
         #ATRIBUTOS ENTORNO
         self.tablero = self.generate_grid()
-        self.tablero = [
-            [   0,    0, 0, 0, 0,  0,    0, 0],
-            [   0, 0, 0, 0, 0,  0,    0,    0],
-            [   0,    0, 0, 'HB', 0,  0,    0,    0],
-            [   4,    0, 0, 0, 0,  0, 0,    0],
-            [   0,    0, 0, 0, 0,  0,    0,    0],
-            [   3,    0, 0,     0, 'HW', 0,   0,    0],
-            [   0,    0, 0,     0, 0,  0,    0,    0],
-            [0,    0, 0, 0,  0,  0,    0,    9],
-        ]
+        self.tablero = [['x2', 0, 0, 0, 0, 0, 0, 0], ['x2', 0, 0, 'HW', 6, 'x2', 0, 0], [0, 0, 3, 0, 0, 0, 0, 'x2'], ['HB', 0, 0, 0, 0, 0, 2, 0], [0, 0, 4, 0, 7, 9, 0, 0], [5, 0, 0, 0, 0, 0, 0, 0], [0, 8, 0, 0, 0, 0, 0, 0], [0, 0, 10, 0, 0, 1, 0, 0]]
+        self.copia_tablero = copy.deepcopy(self.tablero)
+        print(self.tablero)
         self.directions = [
             ("L arriba derecha", -2, 1),  # Dos hacia atrás, una a la derecha
             ("L derecha arriba", -1, 2),  # Una hacia atrás, dos a la derecha
@@ -204,7 +197,18 @@ class Game:
 
 
         #MOVER EL CABALLO
-        self.tablero[fila_actual][columna_actual] = 0
+        horse_has_x2 = self.turno.bono
+
+        if valor == "x2":
+            if horse_has_x2:
+                pass
+            else:
+                self.tablero[fila_actual][columna_actual] = 0
+
+                
+
+        else:
+            self.tablero[fila_actual][columna_actual] = 0 
         self.tablero[nueva_fila][nueva_columna] = self.turno.representacion
 
         self.positions_horse[self.turno.representacion] = (nueva_fila, nueva_columna)
@@ -236,7 +240,6 @@ class Game:
 
     # Encuentra el mejor movimiento para la IA
     def find_best_move(self):
-        inicio = time.time()
         self.alert = "IA PENSANDO"
 
         best_score = -math.inf
@@ -250,7 +253,6 @@ class Game:
             game_clone = copy.deepcopy(self)
             game_clone.moveHorse(pos, True)
 
-
             # Calcular el valor de esta jugada
             score = self.minimax(game_clone, 2, False, princi=self.turno.representacion, profundidad_maxima=self.turno.datos_inteligencia[0])
 
@@ -260,25 +262,20 @@ class Game:
                 best_score = score
                 best_move = pos
 
-
-
-        final = time.time()
-        #print(f"tiempo total {final - inicio}")
         return best_move
     
     
 
 
 
-    def calculate_heuristica(self):
+    def calculate_heuristica_1(self):
         # Calcular el puntaje basado en heurística
         score = 0
 
         score += (self.maquina.score - self.player.score) * 3
         
 
-
-        # Posición actual del caballo de la IA
+        # calcular si a la casilla que se movio esta cerca de otra casilla con mas puntos
         ia_pos = self.positions_horse[self.maquina.representacion]
         max_valor = float('-inf')  # Inicializa con el menor valor posible
         posicion = None  # Para almacenar la posición del valor máximo
@@ -291,8 +288,6 @@ class Game:
                     max_valor = valor
                     posicion = (fila, col)
         
-
-        print(max_valor, posicion)
 
         def knight_distance(start, target):
             if start == target:
@@ -319,13 +314,65 @@ class Game:
             return -1  # No alcanzable (no debería ocurrir en ajedrez estándar)
         
 
-        pasos = knight_distance(ia_pos, posicion)
-        print(f" pasos === {pasos}")
-        score -= pasos
+        pasos = knight_distance(ia_pos, posicion) 
+        score += max(0, 14 - pasos)
+
+        return score
 
 
 
-        self.pintarTrablero()
+
+
+
+    def calculate_heuristica_2(self):
+        # Calcular el puntaje basado en heurística
+        score = 0
+
+        score += self.player.score * 3
+        
+
+        # calcular si a la casilla que se movio esta cerca de otra casilla con mas puntos
+        ia_pos = self.positions_horse[self.player.representacion]
+        max_valor = float('-inf')  # Inicializa con el menor valor posible
+        posicion = None  # Para almacenar la posición del valor máximo
+
+        for fila in range(8):
+            for col in range(8):
+                valor = self.tablero[fila][col]
+                # Verifica si es un número antes de compararlo
+                if isinstance(valor, (int, float)) and valor > max_valor:
+                    max_valor = valor
+                    posicion = (fila, col)
+        
+
+        def knight_distance(start, target):
+            if start == target:
+                return 0
+
+            # BFS
+            queue = deque([(start[0], start[1], 0)])  # (x, y, distancia actual)
+            visited = set()
+            visited.add(start)
+
+            while queue:
+                x, y, dist = queue.popleft()
+
+                for name, dy, dx in self.directions:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx <= 7 and 0 <= ny <= 7:  # Dentro del tablero
+                        if (nx, ny) == target:
+                            return dist + 1
+                        
+                        #if (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        queue.append((nx, ny, dist + 1))
+
+            return -1  # No alcanzable (no debería ocurrir en ajedrez estándar)
+        
+
+        pasos = knight_distance(ia_pos, posicion) 
+        score += max(0, 14 - pasos)
+
         return score
 
 
@@ -335,28 +382,26 @@ class Game:
     def minimax(self, board, depth, is_maximizing, alpha=-math.inf, beta=math.inf, 
                 princi=None, profundidad_maxima=3):
         
+
         board.check_winner()
 
         if board.winner:
-            # Condición de victoria o empate
-            if board.winner == princi:
-                return 1000
-            elif board.winner == "DRAW":
-                return 0
-            else:
-                return -1000
+            if princi == board.maquina.representacion:
+                scorte_final = (board.maquina.score - board.player.score) + max(0, 6 - depth)
             
+            else:
+                scorte_final = board.player.score + max(0, 6 - depth)
+            
+            return scorte_final
+            
+
 
         if depth == profundidad_maxima:
             if princi == board.maquina.representacion:
-                scorte_final =  board.calculate_heuristica() #board.maquina.score - board.player.score #
+                scorte_final = board.calculate_heuristica_1()
             
             else:
-                scorte_final = board.player.score # - board.maquina.score
-
-
-            
-            input(f"final score => {scorte_final}=====\n\n\n")#-8
+                scorte_final =  board.calculate_heuristica_2()
         
             return scorte_final
 
@@ -375,7 +420,7 @@ class Game:
 
                 best_score = max(score, best_score)
                 alpha = max(alpha, score)
-                if beta <= alpha:pass
+                if beta <= alpha:break
 
             return best_score
         
@@ -395,7 +440,7 @@ class Game:
 
                 best_score = min(score, best_score)
                 beta = min(beta, score)
-                if beta <= alpha:pass
+                if beta <= alpha:break
 
             return best_score
 
@@ -442,3 +487,29 @@ class Game:
                     print(f"\033[90m{value:<2}\033[0m", end="  ")
 
             print("")
+
+
+
+    def reset(self):
+        self.tablero = self.copia_tablero
+        self.copia_tablero = copy.deepcopy(self.tablero)
+        # Re-inicializar los atributos relacionados con el entorno
+        self.avalibe_points = 10
+        self.positions_horse = {
+            self.player.representacion: self.find_position(self.player.representacion),
+            self.maquina.representacion: self.find_position(self.maquina.representacion)
+        }
+        
+        # Re-inicializar los atributos de juego
+        self.alert = ""
+        self.winner = None
+        
+        # Reiniciar jugadores
+        self.player.score = 0
+        self.player.bono = False
+        self.maquina.score = 0
+        self.maquina.bono = False
+        
+        # Volver a establecer el turno a la máquina
+        self.turno = self.maquina
+        print("El juego ha sido reiniciado.")

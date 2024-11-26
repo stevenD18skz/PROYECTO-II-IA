@@ -6,7 +6,7 @@ pygame.init()
 
 # Configuraciones básicas
 BOARD_WIDTH, BOARD_HEIGHT = 600, 600  # Tamaño del tablero
-INFO_WIDTH, INFO_HEIGHT = 930, 600    # Tamaño de la barra lateral para datos
+INFO_WIDTH, INFO_HEIGHT = 400, 600    # Tamaño de la barra lateral para datos
 WINDOW_WIDTH = BOARD_WIDTH + INFO_WIDTH  # Tamaño total de la ventana
 WINDOW_HEIGHT = BOARD_HEIGHT
 
@@ -130,7 +130,7 @@ class SmartHorsesBoard:
             # Mostrar mensaje de victoria
             font = pygame.font.SysFont(None, 64)
             if self.back.winner != "DRAW":
-                text = f"¡Gana el Caballo {self.back.maquina.representacion}!"
+                text = f"¡Gana el Caballo {self.back.winner}!"
             else:
                 text = "¡Es un empate!"
 
@@ -140,7 +140,6 @@ class SmartHorsesBoard:
             win.blit(overlay, (0, 0))
             win.blit(text_surface, text_rect)
 
- 
  
 
 
@@ -152,8 +151,7 @@ class SmartHorsesBoard:
 
         # Mover ficha del jugador
         return self.back.moveHorse(tupla=(row, col))
-         
-         
+          
 
         
 
@@ -173,8 +171,8 @@ class InfoPanel:
 
         # Texto de información
         self.draw_text(win, f"Turn: {turn}", (BOARD_WIDTH + 20, 50))
-        self.draw_text(win, f"White Score: {score_white} {back_info.back.maquina}", (BOARD_WIDTH + 20, 100))
-        self.draw_text(win, f"Black Score: {score_black} {back_info.back.player}", (BOARD_WIDTH + 20, 150))
+        self.draw_text(win, f"White Score: {score_white} {back_info.back.maquina.datos_inteligencia[1]}", (BOARD_WIDTH + 20, 100))
+        self.draw_text(win, f"Black Score: {score_black} {back_info.back.player.datos_inteligencia[1]}", (BOARD_WIDTH + 20, 150))
 
         if alert:
             self.draw_text(win, f"Aviso: {alert}", (BOARD_WIDTH + 20, 10))
@@ -192,8 +190,11 @@ class Button:
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.color = color
+        self.original_color = color  # Color original
         self.text_color = text_color
+        self.original_text_color = text_color  # Texto original
         self.action = action
+        self.original_action = action  # Acción original
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, self.rect)
@@ -218,20 +219,50 @@ def main():
     clock = pygame.time.Clock()
 
     # Define botones
-    easy_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 1))
-    medium_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 1))
-    hard_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 1))
-    easy_button_2 = Button(800, BOARD_HEIGHT - 340, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 2))
-    medium_button_2 = Button(800, BOARD_HEIGHT - 260, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 2))
-    hard_button_2 = Button(800, BOARD_HEIGHT - 180, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 2))
-    start_button = Button(630, BOARD_HEIGHT - 100, 150, 50, "Start", (240, 230, 140), (139, 69, 19), lambda: set_difficulty)  # Botón de Start
+    easy_button = Button(630, BOARD_HEIGHT - 420, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 2))
+    medium_button = Button(630, BOARD_HEIGHT - 340, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 2))
+    hard_button = Button(630, BOARD_HEIGHT - 260, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 2))
+    easy_button_2 = Button(800, BOARD_HEIGHT - 420, 150, 50, "Fácil", (144, 238, 144), (0, 100, 0), lambda: set_difficulty("facil", 1))
+    medium_button_2 = Button(800, BOARD_HEIGHT - 340, 150, 50, "Media", (173, 216, 230), (0, 0, 139), lambda: set_difficulty("media", 1))
+    hard_button_2 = Button(800, BOARD_HEIGHT - 260, 150, 50, "Difícil", (255, 182, 193), (139, 0, 0), lambda: set_difficulty("avanzada", 1))
+    start_button = Button(630, BOARD_HEIGHT - 180, 150, 50, "Start", (240, 230, 140), (139, 69, 19), lambda: set_difficulty)  # Botón de Start
 
     buttons = [easy_button, medium_button, hard_button, start_button, easy_button_2, medium_button_2, hard_button_2]
 
+    # Agregar botones de reinicio
+    reset_partial_button = Button(
+        630, BOARD_HEIGHT - 100, 150, 50, "Reinicio Parcial", (200, 200, 255), (50, 50, 150),
+        lambda: reset_game(partial=True)
+    )
+    reset_total_button = Button(
+        800, BOARD_HEIGHT - 100, 150, 50, "Reinicio Total", (255, 200, 200), (150, 50, 50),
+        lambda: reset_game(partial=False)
+    )
+    buttons.extend([reset_partial_button, reset_total_button])
+
+
+
+    # Función para reiniciar el juego
+    def reset_game(partial):
+        print("reinion")
+        nonlocal board, game_started
+        if partial:
+            # Reinicio parcial: Mantiene configuraciones, pero reinicia el tablero y puntajes
+            board.back.reset()  # Supone que hay un método reset_board() en la clase Game
+        else:
+            # Reinicio total: Crea una nueva instancia del juego
+            board = SmartHorsesBoard()
+
+        game_started = False  # Vuelve al estado inicial del juego
+        for button in buttons:
+            if button.action is None:  # Reactiva los botones deshabilitados
+                button.color = button.original_color
+                button.text_color = button.original_text_color
+                button.action = button.original_action
+
+
 
     game_started = False  # Variable para rastrear si el juego ha comenzado
-
-
 
     def set_difficulty(difficulty, p=0):
         if p == 1:
@@ -256,6 +287,7 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
 
+
                 if not game_started:
                     # Habilitar selección de dificultad antes de iniciar el juego
                     for button in buttons:
@@ -274,19 +306,17 @@ def main():
         info_panel.draw(win, board.back.turno.representacion, board.back.maquina.score, board.back.player.score, board.back.alert, board)
 
         for button in buttons:
-            # Deshabilitar botones de dificultad si ya comenzó el juego
-            if game_started:
-                button.color = (200, 200, 200)  # Cambiar a un color apagado
-                button.text_color = (100, 100, 100)  # Color del texto desactivado
-                button.action = None  # Deshabilitar acción
+            if game_started and button.text in ["Fácil", "Media", "Difícil", "Start"]:
+                # Deshabilitar los botones de dificultad y de inicio si ya comenzó el juego
+                button.color = (200, 200, 200)
+                button.text_color = (100, 100, 100)
+                button.action = None
             button.draw(win)
-
-
-
 
 
         if board.back.winner:
             pygame.display.flip()
+            game_started = False
             continue
 
 
